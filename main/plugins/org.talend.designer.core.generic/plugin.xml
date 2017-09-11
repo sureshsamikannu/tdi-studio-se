@@ -57,6 +57,15 @@
                name="NewNetsuiteMigrationTask"
                version="6.4.0">
        </projecttask>
+       <projecttask
+               beforeLogon="false"
+               breaks="6.5.0"
+               class="org.talend.designer.core.generic.model.migration.NewJDBCMigrationTask"
+               description="Migration task for jobs using JDBC components to TCOMP"
+               id="org.talend.designer.core.generic.model.migration.NewJDBCMigrationTask"
+               name="NewJDBCMigrationTask"
+               version="6.5.0">
+       </projecttask>
        <!--<projecttask
              beforeLogon="false"
              breaks="6.3.0"

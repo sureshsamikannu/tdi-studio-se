@@ -690,7 +690,7 @@ public class Component extends AbstractBasicComponent {
         // These parameters is only work when TIS is loaded
         // GLiu Added for Task http://jira.talendforge.org/browse/TESB-4279
         if (PluginChecker.isTeamEdition() && !ComponentCategory.CATEGORY_4_CAMEL.getName().equals(getPaletteType())) {
-            boolean defaultParalelize = Boolean.FALSE;
+            boolean defaultParalelize = componentDefinition.isParallelize();
             param = new ElementParameter(node);
             param.setReadOnly(!defaultParalelize);
             param.setName(EParameterName.PARALLELIZE.getName());
@@ -706,12 +706,14 @@ public class Component extends AbstractBasicComponent {
             param = new ElementParameter(node);
             param.setReadOnly(!defaultParalelize);
             param.setName(EParameterName.PARALLELIZE_NUMBER.getName());
-            param.setValue(2);
+            param.setValue("2");
             param.setDisplayName(EParameterName.PARALLELIZE_NUMBER.getDisplayName());
             param.setFieldType(EParameterFieldType.TEXT);
             param.setCategory(EComponentCategory.ADVANCED);
-            param.setNumRow(200);
-            param.setShowIf(EParameterName.PARALLELIZE.getName() + " == 'true'"); //$NON-NLS-1$
+            param.setNumRow(201);
+            //param.setShowIf(EParameterName.PARALLELIZE.getName() + " == 'true'"); //$NON-NLS-1$
+            //FIXME how to do the show if? now only show it always
+            param.setShow(true);
             param.setDefaultValue(param.getValue());
             listParam.add(param);
 
@@ -722,7 +724,7 @@ public class Component extends AbstractBasicComponent {
             param.setDisplayName(EParameterName.PARALLELIZE_KEEP_EMPTY.getDisplayName());
             param.setFieldType(EParameterFieldType.CHECK);
             param.setCategory(EComponentCategory.ADVANCED);
-            param.setNumRow(200);
+            param.setNumRow(202);
             param.setShow(false);
             param.setDefaultValue(param.getValue());
             listParam.add(param);
@@ -1119,6 +1121,11 @@ public class Component extends AbstractBasicComponent {
     @Override
     public boolean isDataAutoPropagated() {
         return componentDefinition.isDataAutoPropagate();
+    }
+    
+    @Override
+    public boolean canParallelize() {
+        return componentDefinition.isParallelize();
     }
 
     /*
