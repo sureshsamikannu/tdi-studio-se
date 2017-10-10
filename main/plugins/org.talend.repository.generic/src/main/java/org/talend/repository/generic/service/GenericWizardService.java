@@ -147,14 +147,14 @@ public class GenericWizardService implements IGenericWizardService {
     @Override
     public boolean isGenericItem(Item item) {
         if(item !=null && item instanceof ConnectionItem){
-            return ((ConnectionItem)item).getConnection().isGeneric();
+            return ((ConnectionItem)item).getConnection().getCompProperties() != null;
         }
         return false;
     }
 
     @Override
     public boolean isGenericConnection(Connection connection) {
-        return connection != null && connection.isGeneric();
+        return connection != null && connection.getCompProperties() != null;
     }
 
     @Override

@@ -76,7 +76,7 @@ public class GenericDragAndDropHandler extends AbstractDragAndDropServiceHandler
 
     @Override
     public boolean canHandle(Connection connection) {
-        return connection.isGeneric();
+    return connection.getCompProperties() != null;
     }
 
     @Override
@@ -139,7 +139,11 @@ public class GenericDragAndDropHandler extends AbstractDragAndDropServiceHandler
                     List<String> listString = (List<String>) paramValue;
                     for(String pv : listString){
                         Map<String, Object> line = new LinkedHashMap<String, Object>();
-                        line.put(property.getName(),TalendQuoteUtils.addQuotesIfNotExist(pv));
+                        if (pv != null) {
+                            line.put(property.getName(), getRepositoryValueOfStringType(connection, pv));
+                        } else {
+                            line.put(property.getName(), TalendQuoteUtils.addQuotes(""));
+                        }
                         lines.add(line);
                     }
                 }else if (GenericTypeUtils.isStringType(property) || GenericTypeUtils.isObjectType(property)) {
@@ -223,7 +227,7 @@ public class GenericDragAndDropHandler extends AbstractDragAndDropServiceHandler
         if (!(item instanceof ConnectionItem)) {
             return neededComponents;
         }
-        if(!((ConnectionItem)item).getConnection().isGeneric()){
+        if(((ConnectionItem)item).getConnection().getCompProperties() == null){
             return neededComponents;
         }
         IComponentsService service = (IComponentsService) GlobalServiceRegister.getDefault().getService(IComponentsService.class);

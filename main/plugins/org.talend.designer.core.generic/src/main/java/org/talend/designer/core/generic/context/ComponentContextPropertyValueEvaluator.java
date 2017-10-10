@@ -40,7 +40,7 @@ public class ComponentContextPropertyValueEvaluator extends AbstractPropertyValu
         if (storedValue == null) {
             return storedValue;
         }
-        if (storedValue instanceof Schema || storedValue instanceof List || storedValue instanceof Enum
+        if (storedValue instanceof Schema || storedValue instanceof Enum
                 || storedValue instanceof Boolean) {
             return storedValue;
         }
@@ -56,7 +56,11 @@ public class ComponentContextPropertyValueEvaluator extends AbstractPropertyValu
         }
         String stringStoredValue = String.valueOf(storedValue);
         if (context != null && ContextParameterUtils.isContainContextParam(stringStoredValue)) {
-            stringStoredValue = ContextParameterUtils.parseScriptContextCode(stringStoredValue, context);
+            if(storedValue instanceof List){
+                storedValue = ContextParameterUtils.parseScriptContextCodeList(storedValue, context);
+            }else{
+                stringStoredValue = ContextParameterUtils.parseScriptContextCode(stringStoredValue, context);
+            }
         }
         return getTypedValue(property, stringStoredValue);
     }

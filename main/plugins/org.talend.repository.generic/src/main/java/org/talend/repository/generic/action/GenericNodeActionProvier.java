@@ -56,7 +56,8 @@ public class GenericNodeActionProvier extends MetedataNodeActionProvier {
             boolean isConnectionNode = true;
             ERepositoryObjectType nodeType = (ERepositoryObjectType) repNode.getProperties(EProperties.CONTENT_TYPE);
             if (ERepositoryObjectType.METADATA_CON_TABLE.equals(nodeType)
-                    || ERepositoryObjectType.METADATA_CON_COLUMN.equals(nodeType)) {
+                    || ERepositoryObjectType.METADATA_CON_COLUMN.equals(nodeType)
+                    || ERepositoryObjectType.METADATA_CON_QUERY.equals(nodeType)) {
                 isConnectionNode = false;
             }
             if (isConnectionNode) {
@@ -81,14 +82,14 @@ public class GenericNodeActionProvier extends MetedataNodeActionProvier {
 
     private void createAndAddAction(IMenuManager manager, ComponentWizard wizard, IStructuredSelection sel) {
         ITreeContextualAction action = null;
+        if(!allowedCreateAndAdd(sel)){
+            return;
+        }
         if (wizard == null) {
             action = createAction(wizard, sel);
         } else {
             ComponentWizardDefinition definition = wizard.getDefinition();
             String wizardName = definition.getName();
-            if(!allowedCreateAndAdd(wizardName)){
-                return;
-            }
             action = actionsMap.get(wizardName);
             if (action == null) {
                 action = createAction(wizard, sel);
@@ -100,20 +101,23 @@ public class GenericNodeActionProvier extends MetedataNodeActionProvier {
         manager.add(action);
     }
     
-    private boolean allowedCreateAndAdd(String wizardName){
-        List<ERepositoryObjectType> extraTypes = new ArrayList<ERepositoryObjectType>();
+    private boolean allowedCreateAndAdd(IStructuredSelection sel){
+        Object o = sel.getFirstElement();
+        if (sel.isEmpty() || sel.size() != 1 || !(o instanceof RepositoryNode)) {
+            return false;
+        }
+        RepositoryNode repNode = (RepositoryNode) o;
+        ERepositoryObjectType repObjType = repNode.getObjectType();
+        if(repObjType == null){
+            return false;
+        }
         IGenericDBService dbService = null;
         if (GlobalServiceRegister.getDefault().isServiceRegistered(IGenericDBService.class)) {
             dbService = (IGenericDBService) GlobalServiceRegister.getDefault().getService(
                     IGenericDBService.class);
         }
-        if(dbService != null){
-            extraTypes.addAll(dbService.getExtraTypes());
-        }
-        for(ERepositoryObjectType type : extraTypes){
-            if(wizardName.equals(type.getLabel()+".edit")){
-                return false;
-            }
+        if(dbService != null && dbService.getExtraTypes().contains(repObjType)){
+            return false;
         }
         return true;
     }

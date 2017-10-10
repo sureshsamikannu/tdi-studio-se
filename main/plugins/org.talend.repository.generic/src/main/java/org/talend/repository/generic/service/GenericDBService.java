@@ -39,17 +39,24 @@ import org.talend.components.api.wizard.ComponentWizard;
 import org.talend.components.api.wizard.ComponentWizardDefinition;
 import org.talend.core.model.metadata.IMetadataTable;
 import org.talend.core.model.metadata.builder.connection.Connection;
+import org.talend.core.model.metadata.builder.connection.DatabaseConnection;
 import org.talend.core.model.process.EComponentCategory;
 import org.talend.core.model.process.Element;
 import org.talend.core.model.process.IElementParameter;
 import org.talend.core.model.properties.ConnectionItem;
+import org.talend.core.model.properties.DatabaseConnectionItem;
 import org.talend.core.model.properties.Item;
 import org.talend.core.model.properties.Property;
 import org.talend.core.repository.model.ProxyRepositoryFactory;
 import org.talend.core.model.repository.ERepositoryObjectType;
 import org.talend.core.runtime.services.IGenericDBService;
+import org.talend.core.runtime.util.GenericTypeUtils;
 import org.talend.core.ui.check.IChecker;
+import org.talend.daikon.NamedThing;
+import org.talend.daikon.properties.Properties;
+import org.talend.daikon.properties.PropertiesImpl;
 import org.talend.daikon.properties.presentation.Form;
+import org.talend.daikon.properties.property.StringProperty;
 import org.talend.designer.core.generic.constants.IGenericConstants;
 import org.talend.designer.core.generic.model.GenericElementParameter;
 import org.talend.designer.core.generic.utils.ComponentsUtils;
@@ -63,6 +70,7 @@ import org.talend.repository.generic.ui.DynamicComposite;
 import org.talend.repository.generic.ui.context.ContextComposite;
 import org.talend.repository.generic.ui.context.handler.GenericContextHandler;
 import org.talend.repository.generic.update.GenericUpdateManager;
+import org.talend.repository.generic.util.GenericConnectionUtil;
 import org.talend.repository.generic.util.GenericWizardServiceFactory;
 import org.talend.repository.model.IProxyRepositoryFactory;
 
@@ -83,7 +91,7 @@ public class GenericDBService implements IGenericDBService{
             return map;
         }
         ComponentWizard componentWizard = internalService.getComponentWizard(typeName, property.getId());;
-        if(!isCreation && ((ConnectionItem)item).getConnection().isGeneric()){
+        if(!isCreation && ((ConnectionItem)item).getConnection().getCompProperties() != null){
             ConnectionItem gitem = (ConnectionItem) item;
             Connection connection = (Connection) gitem.getConnection();
             ComponentProperties componentProperties = ComponentsUtils
@@ -184,6 +192,7 @@ public class GenericDBService implements IGenericDBService{
                         }
                         compService.afterFormFinish(form.getName(), form.getProperties());
                     }
+                    convertPropertiesToDBElements(form.getProperties(), item.getConnection());
                     factory.save(item);
                 } catch (Throwable e) {
                     //e.printStackTrace();
@@ -231,5 +240,41 @@ public class GenericDBService implements IGenericDBService{
     public List<ERepositoryObjectType> getExtraTypes() {
         return extraTypes;
     }
-
+    
+    @Override
+    public void convertPropertiesToDBElements(Properties props,Connection connection){
+        if(!(connection instanceof DatabaseConnection)){
+            return;
+        }
+        DatabaseConnection dbConnection = (DatabaseConnection) connection;
+        for (NamedThing otherProp : props.getProperties()) {
+            NamedThing thisProp = props.getProperty(otherProp.getName());
+            if(thisProp == null){
+                continue;
+            }
+            if (otherProp instanceof PropertiesImpl) {
+                convertPropertiesToDBElements((Properties) otherProp, connection);
+            } else if (otherProp instanceof org.talend.daikon.properties.property.Property) {
+                // copy the value
+                String proName = ((org.talend.daikon.properties.property.Property) otherProp).getName();
+                Object value = ((org.talend.daikon.properties.property.Property) otherProp).getStoredValue();
+                if(proName.equals("jdbcUrl")){
+                    dbConnection.setURL((String)value);
+                }else if(proName.equals("driverClass")){
+                    dbConnection.setDriverClass((String)value);
+                }else if(proName.equals("userId")){
+                    dbConnection.setUsername((String)value);
+                }else if(proName.equals("password")){
+                    dbConnection.setPassword((String)value);
+                }else if(proName.equals("drivers") && GenericTypeUtils.isListStringType((org.talend.daikon.properties.property.Property)otherProp)){
+                    List<String> listString = (List<String>) value;
+                    String jars = GenericConnectionUtil.getDriverJarPath(listString);
+                    if(jars != null){
+                        dbConnection.setDriverJarPath(jars);
+                    }
+                    
+                }
+            }
+        }
+    }
 }

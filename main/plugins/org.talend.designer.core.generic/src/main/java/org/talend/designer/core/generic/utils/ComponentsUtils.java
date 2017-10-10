@@ -383,7 +383,17 @@ public class ComponentsUtils {
                 List<ElementParameter> parameters = getParametersFromForm(new FakeElement("table"), mainForm); //$NON-NLS-1$
 
                 // table is always empty by default
-                param.setSupportContext(true);
+                param.setSupportContext(isSupportContext(table));
+                Boolean isReadOnly = null;
+                for(ElementParameter e : parameters){
+                    if(isReadOnly == null){
+                        isReadOnly = e.isReadOnly();
+                    }
+                    if(!e.isReadOnly()){
+                        isReadOnly = false; 
+                    }
+                }
+                param.setReadOnly(isReadOnly);
 
                 List<String> codeNames = new ArrayList<>();
                 List<String> possValsDisplay = new ArrayList<>();
@@ -701,6 +711,17 @@ public class ComponentsUtils {
         } else {
             return true;
         }
+    }
+    
+    public static boolean isSupportContext(Properties properties) {
+        for(NamedThing thing:properties.getProperties()){
+            if(thing instanceof Property){
+                if (GenericTypeUtils.isSchemaType((Property)thing)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public static boolean isSameComponentProperties(Properties componentProperties, NamedThing widgetProperty) {

@@ -28,6 +28,7 @@ import org.talend.core.model.metadata.MetadataToolHelper;
 import org.talend.core.model.metadata.builder.ConvertionHelper;
 import org.talend.core.model.metadata.builder.connection.Connection;
 import org.talend.core.model.metadata.builder.connection.ConnectionFactory;
+import org.talend.core.model.metadata.builder.connection.DatabaseConnection;
 import org.talend.core.model.metadata.builder.connection.MetadataColumn;
 import org.talend.core.model.metadata.builder.connection.MetadataTable;
 import org.talend.core.model.process.EParameterFieldType;
@@ -370,6 +371,10 @@ public class SchemaUtils {
     public static List<MetadataTable> getMetadataTables(orgomg.cwm.objectmodel.core.Package parentPackage,
             Class containerTypeClass) {
         List<MetadataTable> metadataTables = new ArrayList<>();
+        if(parentPackage instanceof DatabaseConnection){
+            metadataTables.addAll(ConnectionHelper.getTables((DatabaseConnection)parentPackage));
+            return metadataTables;
+        }
         metadataTables.addAll(PackageHelper.getOwnedElements(parentPackage, MetadataTable.class));
         if (containerTypeClass != null) {
             List subContainers = PackageHelper.getOwnedElements(parentPackage, containerTypeClass);

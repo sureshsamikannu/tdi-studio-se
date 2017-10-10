@@ -14,6 +14,7 @@ package org.talend.repository.generic.util;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
@@ -120,6 +121,26 @@ public class GenericConnectionUtilTest {
         connectionItem.setProperty(connectionProperty);
         connectionItem.setConnection(connection);
         return connectionItem;
+    }
+    
+    @Test
+    public void testGetDriverJarPath() {
+        List<String> listString = new ArrayList<String>();
+        listString.add("mvn:org.talend.libraries/mysql-connector-java-5.1.30-bin/6.0.0");
+        listString.add("mvn:org.talend.libraries/mysql-connector-java-5.1.40-bin/6.0.0");
+        String jars = GenericConnectionUtil.getDriverJarPath(listString);
+        assertEquals(jars, "mysql-connector-java-5.1.30-bin.jar;mysql-connector-java-5.1.40-bin.jar");
+        
+        listString = new ArrayList<String>();
+        listString.add("mysql-connector-java-5.1.30-bin.jar");
+        listString.add("mysql-connector-java-5.1.40-bin.jar");
+        jars = GenericConnectionUtil.getDriverJarPath(listString);
+        assertEquals(jars, "mysql-connector-java-5.1.30-bin.jar;mysql-connector-java-5.1.40-bin.jar");
+        
+        listString = new ArrayList<String>();
+        listString.add("context.jdbc1_drivers");
+        jars = GenericConnectionUtil.getDriverJarPath(listString);
+        assertEquals(jars, "context.jdbc1_drivers");
     }
 
 }

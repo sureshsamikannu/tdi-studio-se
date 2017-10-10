@@ -537,12 +537,28 @@ public class GenericElementParameter extends ElementParameter implements IGeneri
         }
         return null;
     }
+    
+    public Properties getProperties() {
+        NamedThing content = widget.getContent();
+        if (content instanceof Properties) {
+            return (Properties) content;
+        }
+        return null;
+    }
 
     @Override
     public boolean isRepositoryValueUsed() {
         Property property = getProperty();
         if (property != null) {
             return property.getTaggedValue(IGenericConstants.REPOSITORY_VALUE) != null;
+        }
+        Properties properties = getProperties();
+        if(properties != null){
+            for(NamedThing thing : properties.getProperties()){
+                if(thing instanceof Property){
+                    return ((Property)thing).getTaggedValue(IGenericConstants.REPOSITORY_VALUE) != null;
+                }
+            }
         }
         return false;
     }
@@ -552,6 +568,14 @@ public class GenericElementParameter extends ElementParameter implements IGeneri
         Property property = getProperty();
         if (property != null) {
             property.setTaggedValue(IGenericConstants.REPOSITORY_VALUE, repositoryUsed ? property.getName() : null);
+        }
+        Properties properties = getProperties();
+        if(properties != null){
+            for(NamedThing thing : properties.getProperties()){
+                if(thing instanceof Property){
+                    ((Property)thing).setTaggedValue(IGenericConstants.REPOSITORY_VALUE, repositoryUsed ? thing.getName() : null);
+                }
+            }
         }
     }
 
