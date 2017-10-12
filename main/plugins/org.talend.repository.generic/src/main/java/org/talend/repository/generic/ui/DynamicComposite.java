@@ -51,6 +51,7 @@ import org.talend.daikon.properties.Properties;
 import org.talend.daikon.properties.ValidationResult;
 import org.talend.daikon.properties.ValidationResult.Result;
 import org.talend.daikon.properties.presentation.Form;
+import org.talend.daikon.properties.property.Property;
 import org.talend.daikon.properties.property.PropertyValueEvaluator;
 import org.talend.designer.core.generic.constants.IContextEventProperties;
 import org.talend.designer.core.generic.constants.IElementParameterEventProperties;
@@ -179,9 +180,7 @@ public class DynamicComposite extends MissingSettingsMultiThreadDynamicComposite
             properties.setValueEvaluator(evaluator);
         }
 
-        for (
-
-        ElementParameter parameter : parameters) {
+        for (ElementParameter parameter : parameters) {
             if (parameter instanceof GenericElementParameter) {
                 GenericElementParameter genericElementParameter = (GenericElementParameter) parameter;
                 genericElementParameter.setComponentService(componentService);
@@ -229,6 +228,20 @@ public class DynamicComposite extends MissingSettingsMultiThreadDynamicComposite
                         if (property != null && property.getTaggedValue(IGenericConstants.REPOSITORY_VALUE) != null) {
                             genericElementParameter.setRepositoryValueUsed(true);
                             genericElementParameter.setReadOnly(true);
+                        }
+                        Properties pros = properties.getProperties(genericElementParameter.getName());
+                        if(pros != null){
+                            boolean isRepValueUsed = true;
+                            for(NamedThing thing : pros.getProperties()){
+                                if(thing instanceof Property){
+                                    boolean result = ((Property)thing).getTaggedValue(IGenericConstants.REPOSITORY_VALUE) != null;
+                                    if(!result){
+                                        isRepValueUsed = false;
+                                    }
+                                }
+                            }
+                            genericElementParameter.setRepositoryValueUsed(isRepValueUsed);
+                            genericElementParameter.setReadOnly(isRepValueUsed);
                         }
                     }
                 }

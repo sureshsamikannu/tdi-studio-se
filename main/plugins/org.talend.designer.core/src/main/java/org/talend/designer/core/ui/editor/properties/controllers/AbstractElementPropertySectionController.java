@@ -79,6 +79,7 @@ import org.talend.core.database.conn.version.EDatabaseVersion4Drivers;
 import org.talend.core.language.CodeProblemsChecker;
 import org.talend.core.language.ECodeLanguage;
 import org.talend.core.language.ICodeProblemsChecker;
+import org.talend.core.model.components.EComponentType;
 import org.talend.core.model.metadata.IMetadataConnection;
 import org.talend.core.model.metadata.IMetadataTable;
 import org.talend.core.model.metadata.QueryUtil;
@@ -1410,11 +1411,81 @@ public abstract class AbstractElementPropertySectionController implements Proper
         String schema = getValueFromRepositoryName(element, EConnectionParameterName.SCHEMA.getName(), basePropertyParameter);
         connParameters.setSchema(schema);
 
-        String userName = getValueFromRepositoryName(element, EConnectionParameterName.USERNAME.getName(), basePropertyParameter);
-        connParameters.setUserName(userName);
+        if ((elem instanceof Node) && ((Node)elem).getComponent().getComponentType().equals(EComponentType.GENERIC)) {
+            String userName = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_USERNAME.getName(), basePropertyParameter);
+            connParameters.setUserName(userName);
 
-        String password = getValueFromRepositoryName(element, EConnectionParameterName.PASSWORD.getName(), basePropertyParameter);
-        connParameters.setPassword(password);
+            String password = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_PASSWORD.getName(), basePropertyParameter);
+            connParameters.setPassword(password);
+
+            String url = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_URL.getName(), basePropertyParameter);
+            connParameters.setUrl(TalendTextUtils.removeQuotes(url));
+
+            String driverJar = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_DRIVER_JAR.getName(),
+                    basePropertyParameter);
+            connParameters.setDriverJar(TalendTextUtils.removeQuotes(driverJar));
+
+            String driverClass = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_DRIVER_CLASS.getName(),
+                    basePropertyParameter);
+            connParameters.setDriverClass(TalendTextUtils.removeQuotes(driverClass));
+        }else{
+            String userName = getValueFromRepositoryName(element, EConnectionParameterName.USERNAME.getName(), basePropertyParameter);
+            connParameters.setUserName(userName);
+            
+            String password = getValueFromRepositoryName(element, EConnectionParameterName.PASSWORD.getName(), basePropertyParameter);
+            connParameters.setPassword(password);
+            
+         // General jdbc
+            String url = getValueFromRepositoryName(element, EConnectionParameterName.URL.getName(), basePropertyParameter);
+            if (StringUtils.isEmpty(url)) {
+                // for oracle RAC
+                // url = getValueFromRepositoryName(element, "RAC_" + EConnectionParameterName.URL.getName());
+                // Changed by Marvin Wang on Feb. 14, 2012 for bug TDI-19597. Above is the original code, below is new code
+                // to get the Oracle RAC url.
+                if (EDatabaseTypeName.ORACLE_CUSTOM.getXmlName().equals(type)) {
+                    url = getValueFromRepositoryName(element, "RAC_" + EConnectionParameterName.URL.getName(), basePropertyParameter);
+                }
+            }
+            connParameters.setUrl(TalendTextUtils.removeQuotes(url));
+
+            String driverJar = getValueFromRepositoryName(element, EConnectionParameterName.DRIVER_JAR.getName(),
+                    basePropertyParameter);
+            connParameters.setDriverJar(TalendTextUtils.removeQuotes(driverJar));
+            
+            String driverClass = getValueFromRepositoryName(element, EConnectionParameterName.DRIVER_CLASS.getName(),
+                    basePropertyParameter);
+            String driverName = getValueFromRepositoryName(element, "DB_VERSION", basePropertyParameter); //$NON-NLS-1$
+            if (StringUtils.isBlank(driverName) && EDatabaseTypeName.MSSQL.getDisplayName().equals(connParameters.getDbType())) {
+                driverName = getValueFromRepositoryName(element, "DRIVER", basePropertyParameter); //$NON-NLS-1$
+            }
+            String dbVersionName = EDatabaseVersion4Drivers.getDbVersionName(type, driverName);
+            connParameters.setDbVersion(dbVersionName);
+            if (EDatabaseVersion4Drivers.VERTICA_5_1.getVersionValue().equals(dbVersionName)
+                    || EDatabaseVersion4Drivers.VERTICA_6.getVersionValue().equals(dbVersionName)
+                    || EDatabaseVersion4Drivers.VERTICA_6_1_X.getVersionValue().equals(dbVersionName)
+                    || EDatabaseVersion4Drivers.VERTICA_7.getVersionValue().equals(dbVersionName)) {
+                driverClass = EDatabase4DriverClassName.VERTICA2.getDriverClass();
+            }
+
+            connParameters.setDriverClass(TalendTextUtils.removeQuotes(driverClass));
+
+            if (driverClass != null && !"".equals(driverClass)
+                    && !EDatabaseTypeName.GENERAL_JDBC.getDisplayName().equals(connParameters.getDbType())) {
+                if (driverClass.startsWith("\"") && driverClass.endsWith("\"")) {
+                    driverClass = TalendTextUtils.removeQuotes(driverClass);
+                }
+                String dbTypeByClassName = "";
+                if (driverJar != null && !"".equals(driverJar)) {
+                    dbTypeByClassName = extractMeta.getDbTypeByClassNameAndDriverJar(driverClass, driverJar);
+                } else {
+                    dbTypeByClassName = extractMeta.getDbTypeByClassName(driverClass);
+                }
+
+                if (dbTypeByClassName != null) {
+                    connParameters.setDbType(dbTypeByClassName);
+                }
+            }
+        }
 
         String host = getValueFromRepositoryName(element, EConnectionParameterName.SERVER_NAME.getName(), basePropertyParameter);
         connParameters.setHost(host);
@@ -1463,57 +1534,6 @@ public abstract class AbstractElementPropertySectionController implements Proper
             dir = getValueFromRepositoryName(elem, EConnectionParameterName.DBPATH.getName(), basePropertyParameter);
         }
         connParameters.setDirectory(dir);
-
-        // General jdbc
-        String url = getValueFromRepositoryName(element, EConnectionParameterName.URL.getName(), basePropertyParameter);
-        if (StringUtils.isEmpty(url)) {
-            // for oracle RAC
-            // url = getValueFromRepositoryName(element, "RAC_" + EConnectionParameterName.URL.getName());
-            // Changed by Marvin Wang on Feb. 14, 2012 for bug TDI-19597. Above is the original code, below is new code
-            // to get the Oracle RAC url.
-            if (EDatabaseTypeName.ORACLE_CUSTOM.getXmlName().equals(type)) {
-                url = getValueFromRepositoryName(element, "RAC_" + EConnectionParameterName.URL.getName(), basePropertyParameter);
-            }
-        }
-        connParameters.setUrl(TalendTextUtils.removeQuotes(url));
-
-        String driverJar = getValueFromRepositoryName(element, EConnectionParameterName.DRIVER_JAR.getName(),
-                basePropertyParameter);
-        connParameters.setDriverJar(TalendTextUtils.removeQuotes(driverJar));
-
-        String driverClass = getValueFromRepositoryName(element, EConnectionParameterName.DRIVER_CLASS.getName(),
-                basePropertyParameter);
-        String driverName = getValueFromRepositoryName(element, "DB_VERSION", basePropertyParameter); //$NON-NLS-1$
-        if (StringUtils.isBlank(driverName) && EDatabaseTypeName.MSSQL.getDisplayName().equals(connParameters.getDbType())) {
-            driverName = getValueFromRepositoryName(element, "DRIVER", basePropertyParameter); //$NON-NLS-1$
-        }
-        String dbVersionName = EDatabaseVersion4Drivers.getDbVersionName(type, driverName);
-        connParameters.setDbVersion(dbVersionName);
-        if (EDatabaseVersion4Drivers.VERTICA_5_1.getVersionValue().equals(dbVersionName)
-                || EDatabaseVersion4Drivers.VERTICA_6.getVersionValue().equals(dbVersionName)
-                || EDatabaseVersion4Drivers.VERTICA_6_1_X.getVersionValue().equals(dbVersionName)
-                || EDatabaseVersion4Drivers.VERTICA_7.getVersionValue().equals(dbVersionName)) {
-            driverClass = EDatabase4DriverClassName.VERTICA2.getDriverClass();
-        }
-
-        connParameters.setDriverClass(TalendTextUtils.removeQuotes(driverClass));
-
-        if (driverClass != null && !"".equals(driverClass)
-                && !EDatabaseTypeName.GENERAL_JDBC.getDisplayName().equals(connParameters.getDbType())) {
-            if (driverClass.startsWith("\"") && driverClass.endsWith("\"")) {
-                driverClass = TalendTextUtils.removeQuotes(driverClass);
-            }
-            String dbTypeByClassName = "";
-            if (driverJar != null && !"".equals(driverJar)) {
-                dbTypeByClassName = extractMeta.getDbTypeByClassNameAndDriverJar(driverClass, driverJar);
-            } else {
-                dbTypeByClassName = extractMeta.getDbTypeByClassName(driverClass);
-            }
-
-            if (dbTypeByClassName != null) {
-                connParameters.setDbType(dbTypeByClassName);
-            }
-        }
 
         String jdbcProps = getValueFromRepositoryName(element, EConnectionParameterName.PROPERTIES_STRING.getName(),
                 basePropertyParameter);
@@ -1613,16 +1633,60 @@ public abstract class AbstractElementPropertySectionController implements Proper
             dbName = ""; //$NON-NLS-1$
         }
         connParameters.setDbName(dbName);
-        connParameters.setPassword(getParameterValueWithContext(element, EConnectionParameterName.PASSWORD.getName(), context,
-                basePropertyParameter));
+        if ((elem instanceof Node) && ((Node)elem).getComponent().getComponentType().equals(EComponentType.GENERIC)) {
+            connParameters.setPassword(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_USERNAME.getName(), context,
+                    basePropertyParameter));
+            connParameters.setUserName(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_PASSWORD.getName(), context,
+                    basePropertyParameter));
+            connParameters.setUrl(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_URL.getName(), context,
+                    basePropertyParameter));
+            connParameters.setDriverJar(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_DRIVER_JAR.getName(), context,
+                    basePropertyParameter));
+            connParameters.setDriverClass(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_DRIVER_CLASS.getName(), context,
+                    basePropertyParameter));
+        }else{
+            connParameters.setPassword(getParameterValueWithContext(element, EConnectionParameterName.PASSWORD.getName(), context,
+                    basePropertyParameter));
+            connParameters.setUserName(getParameterValueWithContext(element, EConnectionParameterName.USERNAME.getName(), context,
+                    basePropertyParameter));
+            String url = TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element,
+                    EConnectionParameterName.URL.getName(), context, basePropertyParameter));
+            if (StringUtils.isEmpty(url)) {
+                // try to get url for oracle RAC.
+                // url = TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element,
+                // "RAC_" + EConnectionParameterName.URL.getName(), context));
+                // Changed by Marvin Wang on Feb. 14, 2012 for bug TDI-19597. Above is the original code, below is new code
+                // to get the Oracle RAC url.
+                if (EDatabaseTypeName.ORACLE_CUSTOM.getDisplayName().equals(dbType)) {
+                    url = TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element, "RAC_"
+                            + EConnectionParameterName.URL.getName(), context, basePropertyParameter));
+                }
+            }
+            connParameters.setUrl(url);
+            String driverClass = TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element,
+                    EConnectionParameterName.DRIVER_CLASS.getName(), context, basePropertyParameter));
+            if (element != null) {
+                String dbVersion = getValueFromRepositoryName(element, "DB_VERSION");
+                if (EDatabaseVersion4Drivers.VERTICA_6.getVersionValue().equals(dbVersion)
+                        || EDatabaseVersion4Drivers.VERTICA_5_1.getVersionValue().equals(dbVersion)
+                        || EDatabaseVersion4Drivers.VERTICA_6_1_X.getVersionValue().equals(dbVersion)
+                        || EDatabaseVersion4Drivers.VERTICA_7.getVersionValue().equals(dbVersion)) {
+                    driverClass = EDatabase4DriverClassName.VERTICA2.getDriverClass();
+                }
+            }
+            connParameters.setDriverClass(driverClass);
+
+            connParameters.setDriverJar(TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element,
+                    EConnectionParameterName.DRIVER_JAR.getName(), context, basePropertyParameter)));
+        }
+        
         connParameters.setPort(getParameterValueWithContext(element, EConnectionParameterName.PORT.getName(), context,
                 basePropertyParameter));
         connParameters.setSchema(getParameterValueWithContext(element, EConnectionParameterName.SCHEMA.getName(), context,
                 basePropertyParameter));
         connParameters.setHost(getParameterValueWithContext(element, EConnectionParameterName.SERVER_NAME.getName(), context,
                 basePropertyParameter));
-        connParameters.setUserName(getParameterValueWithContext(element, EConnectionParameterName.USERNAME.getName(), context,
-                basePropertyParameter));
+        
         String dir = getParameterValueWithContext(element, EConnectionParameterName.DIRECTORY.getName(), context,
                 basePropertyParameter);
         if (dbType.equals(EDatabaseTypeName.HSQLDB_IN_PROGRESS.getDisplayName())) {
@@ -1638,37 +1702,6 @@ public abstract class AbstractElementPropertySectionController implements Proper
         connParameters.setDirectory(dir);
         connParameters.setHttps(Boolean.parseBoolean(getParameterValueWithContext(element,
                 EConnectionParameterName.HTTPS.getName(), context, basePropertyParameter)));
-        String url = TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element,
-                EConnectionParameterName.URL.getName(), context, basePropertyParameter));
-        if (StringUtils.isEmpty(url)) {
-            // try to get url for oracle RAC.
-            // url = TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element,
-            // "RAC_" + EConnectionParameterName.URL.getName(), context));
-            // Changed by Marvin Wang on Feb. 14, 2012 for bug TDI-19597. Above is the original code, below is new code
-            // to get the Oracle RAC url.
-            if (EDatabaseTypeName.ORACLE_CUSTOM.getDisplayName().equals(dbType)) {
-                url = TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element, "RAC_"
-                        + EConnectionParameterName.URL.getName(), context, basePropertyParameter));
-            }
-        }
-        connParameters.setUrl(url);
-
-        String driverClass = TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element,
-                EConnectionParameterName.DRIVER_CLASS.getName(), context, basePropertyParameter));
-        if (element != null) {
-            String dbVersion = getValueFromRepositoryName(element, "DB_VERSION");
-            if (EDatabaseVersion4Drivers.VERTICA_6.getVersionValue().equals(dbVersion)
-                    || EDatabaseVersion4Drivers.VERTICA_5_1.getVersionValue().equals(dbVersion)
-                    || EDatabaseVersion4Drivers.VERTICA_6_1_X.getVersionValue().equals(dbVersion)
-                    || EDatabaseVersion4Drivers.VERTICA_7.getVersionValue().equals(dbVersion)) {
-                driverClass = EDatabase4DriverClassName.VERTICA2.getDriverClass();
-            }
-        }
-        connParameters.setDriverClass(driverClass);
-
-        connParameters.setDriverJar(TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element,
-                EConnectionParameterName.DRIVER_JAR.getName(), context, basePropertyParameter)));
-
         // for jdbc connection from reposiotry
         final String dbTypeByClassName = ExtractMetaDataUtils.getInstance().getDbTypeByClassName(connParameters.getDriverClass());
         if (connParameters.getDbType() == null || EDatabaseTypeName.MYSQL.getDisplayName().equals(connParameters.getDbType())
@@ -1731,6 +1764,12 @@ public abstract class AbstractElementPropertySectionController implements Proper
                                 jarValues = jarValues + valueMap.get("JAR_NAME");
                             } else {
                                 jarValues = jarValues + ";" + valueMap.get("JAR_NAME");
+                            }
+                        }else if (valueMap.get("drivers") != null) {
+                            if (jarValues.equals("")) {
+                                jarValues = jarValues + valueMap.get("drivers");
+                            } else {
+                                jarValues = jarValues + ";" + valueMap.get("drivers");
                             }
                         }
                     }
