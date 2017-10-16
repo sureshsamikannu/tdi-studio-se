@@ -111,8 +111,14 @@ public class TalendJavaProjectManager {
                 process_storm.create(true, true, monitor);
                 IFile processStormPom = process_storm.getFile(TalendMavenConstants.POM_FILE_NAME);
 
-                // TODO routes and services
-
+                // create routes and services
+                IFolder process_routes = jobs.getFolder(DIR_PROCESS_ROUTES);
+                process_routes.create(true, true, monitor);
+                IFile processRoutesPom = process_routes.getFile(TalendMavenConstants.POM_FILE_NAME);
+                IFolder process_services = jobs.getFolder(DIR_PROCESS_SERVICES);
+                process_services.create(true, true, monitor);
+                IFile processServicesPom = process_services.getFile(TalendMavenConstants.POM_FILE_NAME);
+                
                 // create aggregator poms
                 AggregatorPomsManager manager = new AggregatorPomsManager(project);
                 manager.createAggregatorFolderPom(processPom, DIR_PROCESS,
@@ -120,6 +126,10 @@ public class TalendJavaProjectManager {
                 manager.createAggregatorFolderPom(processMRPom, DIR_PROCESS_MR,
                         PomIdsHelper.getJobGroupId(project.getTechnicalLabel()), monitor);
                 manager.createAggregatorFolderPom(processStormPom, DIR_PROCESS_STORM,
+                        PomIdsHelper.getJobGroupId(project.getTechnicalLabel()), monitor);
+                manager.createAggregatorFolderPom(processRoutesPom, DIR_PROCESS_ROUTES,
+                        PomIdsHelper.getJobGroupId(project.getTechnicalLabel()), monitor);
+                manager.createAggregatorFolderPom(processServicesPom, DIR_PROCESS_SERVICES,
                         PomIdsHelper.getJobGroupId(project.getTechnicalLabel()), monitor);
                 manager.createAggregatorFolderPom(jobsPom, DIR_JOBS, PomIdsHelper.getJobGroupId(project.getTechnicalLabel()),
                         monitor);
@@ -302,6 +312,13 @@ public class TalendJavaProjectManager {
             }
         }
 
+    }
+    
+    public static IFile getProjectRootPom(Project project) {
+        if (project == null) {
+            project = ProjectManager.getInstance().getCurrentProject();
+        }
+        return getProjectPomsFolder(project).getFile(TalendMavenConstants.POM_FILE_NAME);
     }
 
     private static IFolder getProjectPomsFolder(Project project) {

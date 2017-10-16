@@ -357,7 +357,7 @@ public class JobJavaScriptOSGIForESBManager extends JobJavaScriptsManager {
                 String[] jf = jobFolderName.split(":"); //$NON-NLS-1$
                 String projectName = jf[0];
                 String folderName = jf[1];
-                String classRootLocation = getClassRootLocation(process) + projectName + File.separator;
+                String classRootLocation = getJobClassRootLocation(process.getProperty()) + projectName + File.separator;
                 String classRoot = FilesUtils.getFileRealPath(classRootLocation + folderName);
                 String targetPath = FilesUtils.getFileRealPath(classesLocation + File.separator + projectName + File.separator
                         + folderName);
@@ -375,11 +375,6 @@ public class JobJavaScriptOSGIForESBManager extends JobJavaScriptsManager {
         } catch (Exception e) {
             ExceptionHandler.process(e);
         }
-    }
-
-    private String getClassRootLocation(ProcessItem process) {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     private static boolean isTalendESBJob(ProcessItem processItem) {
