@@ -338,6 +338,12 @@ public abstract class AbstractElementPropertySectionController implements Proper
                                     } else {
                                         value = value + ";" + valueMap.get("JAR_NAME");
                                     }
+                                }else if (valueMap.get("drivers") != null) {
+                                    if (value.equals("")) {
+                                        value = value + valueMap.get("drivers");
+                                    } else {
+                                        value = value + ";" + valueMap.get("drivers");
+                                    }
                                 }
                             }
                         }
@@ -390,6 +396,12 @@ public abstract class AbstractElementPropertySectionController implements Proper
                                     } else {
                                         value = value + ";" + valueMap.get("JAR_NAME");
                                     }
+                                }else if (valueMap.get("drivers") != null) {
+                                    if (value.equals("")) {
+                                        value = value + valueMap.get("drivers");
+                                    } else {
+                                        value = value + ";" + valueMap.get("drivers");
+                                    }
                                 }
                             }
                         }
@@ -434,6 +446,12 @@ public abstract class AbstractElementPropertySectionController implements Proper
                                             value = value + valueMap.get("JAR_NAME");
                                         } else {
                                             value = value + ";" + valueMap.get("JAR_NAME");
+                                        }
+                                    }else if (valueMap.get("drivers") != null) {
+                                        if (value.equals("")) {
+                                            value = value + valueMap.get("drivers");
+                                        } else {
+                                            value = value + ";" + valueMap.get("drivers");
                                         }
                                     }
                                 }
@@ -1412,20 +1430,20 @@ public abstract class AbstractElementPropertySectionController implements Proper
         connParameters.setSchema(schema);
 
         if ((elem instanceof Node) && ((Node)elem).getComponent().getComponentType().equals(EComponentType.GENERIC)) {
-            String userName = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_USERNAME.getName(), basePropertyParameter);
+            String userName = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_USERNAME.getDisplayName(), basePropertyParameter);
             connParameters.setUserName(userName);
 
-            String password = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_PASSWORD.getName(), basePropertyParameter);
+            String password = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_PASSWORD.getDisplayName(), basePropertyParameter);
             connParameters.setPassword(password);
 
-            String url = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_URL.getName(), basePropertyParameter);
+            String url = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_URL.getDisplayName(), basePropertyParameter);
             connParameters.setUrl(TalendTextUtils.removeQuotes(url));
 
-            String driverJar = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_DRIVER_JAR.getName(),
+            String driverJar = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_DRIVER_JAR.getDisplayName(),
                     basePropertyParameter);
             connParameters.setDriverJar(TalendTextUtils.removeQuotes(driverJar));
 
-            String driverClass = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_DRIVER_CLASS.getName(),
+            String driverClass = getValueFromRepositoryName(element, EConnectionParameterName.GENERIC_DRIVER_CLASS.getDisplayName(),
                     basePropertyParameter);
             connParameters.setDriverClass(TalendTextUtils.removeQuotes(driverClass));
         }else{
@@ -1634,15 +1652,15 @@ public abstract class AbstractElementPropertySectionController implements Proper
         }
         connParameters.setDbName(dbName);
         if ((elem instanceof Node) && ((Node)elem).getComponent().getComponentType().equals(EComponentType.GENERIC)) {
-            connParameters.setPassword(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_USERNAME.getName(), context,
+            connParameters.setPassword(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_USERNAME.getDisplayName(), context,
                     basePropertyParameter));
-            connParameters.setUserName(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_PASSWORD.getName(), context,
+            connParameters.setUserName(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_PASSWORD.getDisplayName(), context,
                     basePropertyParameter));
-            connParameters.setUrl(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_URL.getName(), context,
+            connParameters.setUrl(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_URL.getDisplayName(), context,
                     basePropertyParameter));
-            connParameters.setDriverJar(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_DRIVER_JAR.getName(), context,
+            connParameters.setDriverJar(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_DRIVER_JAR.getDisplayName(), context,
                     basePropertyParameter));
-            connParameters.setDriverClass(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_DRIVER_CLASS.getName(), context,
+            connParameters.setDriverClass(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_DRIVER_CLASS.getDisplayName(), context,
                     basePropertyParameter));
         }else{
             connParameters.setPassword(getParameterValueWithContext(element, EConnectionParameterName.PASSWORD.getName(), context,

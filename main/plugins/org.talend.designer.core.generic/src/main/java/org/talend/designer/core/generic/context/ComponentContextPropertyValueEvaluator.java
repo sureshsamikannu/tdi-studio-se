@@ -61,6 +61,8 @@ public class ComponentContextPropertyValueEvaluator extends AbstractPropertyValu
             }else{
                 stringStoredValue = ContextParameterUtils.parseScriptContextCode(stringStoredValue, context);
             }
+        }else if(storedValue instanceof List){
+            return storedValue;
         }
         return getTypedValue(property, stringStoredValue);
     }

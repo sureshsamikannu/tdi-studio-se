@@ -109,7 +109,7 @@ public class GenericNodeActionProvier extends MetedataNodeActionProvier {
         RepositoryNode repNode = (RepositoryNode) o;
         ERepositoryObjectType repObjType = repNode.getObjectType();
         if(repObjType == null){
-            return false;
+            repObjType = (ERepositoryObjectType) repNode.getProperties(EProperties.CONTENT_TYPE);
         }
         IGenericDBService dbService = null;
         if (GlobalServiceRegister.getDefault().isServiceRegistered(IGenericDBService.class)) {

@@ -587,14 +587,15 @@ public class GenericElementParameter extends ElementParameter implements IGeneri
     @Override
     public String getRepositoryValue() {
         if (isRepositoryValueUsed() && super.getRepositoryValue() == null) {
-            Property property = getProperty();
-            if (property != null) {
-                super.setRepositoryValue((String) property.getTaggedValue(IGenericConstants.REPOSITORY_VALUE));
-            }
-            Properties properties = getProperties();
-            if(properties != null){
-                super.setRepositoryValue(properties.getName());
-            }
+            super.setRepositoryValue(this.getName());
+//            Property property = getProperty();
+//            if (property != null) {
+//                super.setRepositoryValue((String) property.getTaggedValue(IGenericConstants.REPOSITORY_VALUE));
+//            }
+//            Properties properties = getProperties();
+//            if(properties != null){
+//                super.setRepositoryValue(properties.getName());
+//            }
         }
         return super.getRepositoryValue();
     }
