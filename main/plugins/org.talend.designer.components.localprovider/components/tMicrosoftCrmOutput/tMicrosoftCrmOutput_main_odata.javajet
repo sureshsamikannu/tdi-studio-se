@@ -47,8 +47,13 @@
 			  			    				
 			  			    			<%
 			  			    			}
+
+                          String columnValue = connName+"."+column.getLabel();
+                          if("Guid".equals(column.getType())){
+                                columnValue = "java.util.UUID.fromString("+columnValue+")";
+                          }
 	                           %>
-                           		client_<%=cid%>.addEntityProperty(entity_<%=cid%>, "<%=column.getLabel()%>", org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind.<%=column.getType()%>, 	<%=connName%>.<%=column.getLabel()%>);
+                           		client_<%=cid%>.addEntityProperty(entity_<%=cid%>, "<%=column.getLabel()%>", org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind.<%=column.getType()%>, 	<%=columnValue%>);
 	                           <%
 	                           if(!isPrimitive && ignoreNull) {
 			  			    			%>
