@@ -1656,12 +1656,15 @@ public abstract class AbstractElementPropertySectionController implements Proper
                     basePropertyParameter));
             connParameters.setUserName(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_PASSWORD.getDisplayName(), context,
                     basePropertyParameter));
-            connParameters.setUrl(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_URL.getDisplayName(), context,
+            String url = TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_URL.getDisplayName(), context,
                     basePropertyParameter));
-            connParameters.setDriverJar(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_DRIVER_JAR.getDisplayName(), context,
+            connParameters.setUrl(url);
+            String jar = TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_DRIVER_JAR.getDisplayName(), context,
                     basePropertyParameter));
-            connParameters.setDriverClass(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_DRIVER_CLASS.getDisplayName(), context,
+            connParameters.setDriverJar(jar);
+            String driverClass = TalendTextUtils.removeQuotesIfExist(getParameterValueWithContext(element, EConnectionParameterName.GENERIC_DRIVER_CLASS.getDisplayName(), context,
                     basePropertyParameter));
+            connParameters.setDriverClass(driverClass);
         }else{
             connParameters.setPassword(getParameterValueWithContext(element, EConnectionParameterName.PASSWORD.getName(), context,
                     basePropertyParameter));

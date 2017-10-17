@@ -176,6 +176,11 @@
              widgetType="widget.type.directory">
        </Mapping>
        <Mapping
+             mapFieldType="QUERYSTORE_TYPE"
+             name="widget.type.querystoreType"
+             widgetType="widget.type.querystoreType">
+       </Mapping>
+       <Mapping
              mapFieldType="MEMO_SQL"
              name="widget.type.memoSql"
              widgetType="widget.type.memoSql">
@@ -184,6 +189,11 @@
              mapFieldType="MAPPING_TYPE"
              name="widget.type.mappingType"
              widgetType="widget.type.mappingType">
+       </Mapping>
+       <Mapping
+             mapFieldType="GUESS_SCHEMA"
+             name="widget.type.guessSchema"
+             widgetType="widget.type.guessSchema">
        </Mapping>
    </extension>
    <extension

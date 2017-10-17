@@ -75,6 +75,7 @@ import org.talend.core.model.process.IElementParameter;
 import org.talend.core.model.process.IElementParameterDefaultValue;
 import org.talend.core.model.process.INode;
 import org.talend.core.model.process.INodeConnector;
+import org.talend.core.model.repository.ERepositoryObjectType;
 import org.talend.core.model.temp.ECodePart;
 import org.talend.core.model.utils.ContextParameterUtils;
 import org.talend.core.model.utils.NodeUtil;
@@ -82,6 +83,7 @@ import org.talend.core.prefs.ITalendCorePrefConstants;
 import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenConstants;
 import org.talend.core.runtime.maven.MavenUrlHelper;
+import org.talend.core.runtime.services.IGenericDBService;
 import org.talend.core.runtime.services.IGenericWizardService;
 import org.talend.core.runtime.util.ComponentReturnVariableUtils;
 import org.talend.core.runtime.util.GenericTypeUtils;
@@ -622,7 +624,11 @@ public class Component extends AbstractBasicComponent {
         param.setDisplayName(EParameterName.PROPERTY_TYPE.getDisplayName());
         param.setFieldType(EParameterFieldType.PROPERTY_TYPE);
         if (wizardDefinition != null) {
-            param.setRepositoryValue(wizardDefinition.getName());
+            if(isExtraType(wizardDefinition.getName())){
+                param.setRepositoryValue("DATABASE:"+wizardDefinition.getName());
+            }else{
+                param.setRepositoryValue(wizardDefinition.getName());
+            }
         }
         param.setValue("");//$NON-NLS-1$
         param.setNumRow(1);
@@ -729,6 +735,22 @@ public class Component extends AbstractBasicComponent {
             param.setDefaultValue(param.getValue());
             listParam.add(param);
         }
+    }
+    
+    private boolean isExtraType(String definame){
+        IGenericDBService dbService = null;
+        if (GlobalServiceRegister.getDefault().isServiceRegistered(IGenericDBService.class)) {
+            dbService = (IGenericDBService) GlobalServiceRegister.getDefault().getService(
+                    IGenericDBService.class);
+        }
+        if(dbService != null){
+            for(ERepositoryObjectType type:dbService.getExtraTypes()){
+                if(type.getLabel().equals(definame)){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private ComponentWizardDefinition getWizardDefinition(ComponentProperties componentProperties) {

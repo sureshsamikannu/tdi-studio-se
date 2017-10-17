@@ -30,6 +30,7 @@ import org.talend.core.model.components.IComponentsService;
 import org.talend.core.model.metadata.IMetadataTable;
 import org.talend.core.model.metadata.MetadataToolHelper;
 import org.talend.core.model.metadata.builder.connection.Connection;
+import org.talend.core.model.metadata.builder.connection.DatabaseConnection;
 import org.talend.core.model.metadata.builder.connection.MetadataTable;
 import org.talend.core.model.process.IElement;
 import org.talend.core.model.process.IElementParameter;
@@ -76,7 +77,10 @@ public class GenericDragAndDropHandler extends AbstractDragAndDropServiceHandler
 
     @Override
     public boolean canHandle(Connection connection) {
-    return connection.getCompProperties() != null;
+        if(connection == null){
+            return false;
+        }
+        return connection.getCompProperties() != null;
     }
 
     @Override
@@ -125,6 +129,9 @@ public class GenericDragAndDropHandler extends AbstractDragAndDropServiceHandler
                 return getGenericRepositoryValue(connection, componentProperties,
                         value.substring(value.indexOf(IGenericConstants.EXP_SEPARATOR) + 1), table);
             }
+        }
+        if(connection instanceof DatabaseConnection){
+            return ((DatabaseConnection)connection).getDatabaseType();
         }
         return null;
     }
