@@ -1,17 +1,26 @@
+// ============================================================================
+//
+// Copyright (C) 2006-2017 Talend Inc. - www.talend.com
+//
+// This source code is available under agreement available at
+// %InstallDIR%\features\org.talend.rcp.branding.%PRODUCTNAME%\%PRODUCTNAME%license.txt
+//
+// You should have received a copy of the agreement
+// along with this program; if not, write to Talend SA
+// 9 rue Pages 92150 Suresnes, France
+//
+// ============================================================================
 package org.talend.ms.crm.odata;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
+import javax.naming.AuthenticationException;
 import javax.naming.ServiceUnavailableException;
 
 import org.apache.commons.io.IOUtils;
@@ -41,7 +50,6 @@ import org.apache.olingo.client.api.domain.ClientEntitySet;
 import org.apache.olingo.client.api.domain.ClientEntitySetIterator;
 import org.apache.olingo.client.api.domain.ClientProperty;
 import org.apache.olingo.client.api.http.HttpClientException;
-import org.apache.olingo.client.api.http.HttpClientFactory;
 import org.apache.olingo.client.api.serialization.ODataSerializer;
 import org.apache.olingo.client.api.uri.QueryOption;
 import org.apache.olingo.client.api.uri.URIBuilder;
@@ -52,17 +60,18 @@ import org.apache.olingo.commons.api.Constants;
 import org.apache.olingo.commons.api.edm.EdmPrimitiveTypeKind;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
 import org.apache.olingo.commons.api.format.ContentType;
-import org.apache.olingo.commons.api.http.HttpHeader;
 import org.apache.olingo.commons.api.http.HttpMethod;
-
-import com.microsoft.aad.adal4j.AuthenticationContext;
-import com.microsoft.aad.adal4j.AuthenticationResult;
+import org.talend.ms.crm.odata.authentication.AuthStrategyFactory;
+import org.talend.ms.crm.odata.authentication.IAuthStrategy;
+import org.talend.ms.crm.odata.httpclientfactory.DefaultHttpClientState;
+import org.talend.ms.crm.odata.httpclientfactory.IHttpClientFactoryObserver;
+import org.talend.ms.crm.odata.httpclientfactory.IHttpclientFactoryObservable;
 
 /**
  * Client for accessing Dynamics CRM Online using the Web API
  * 
  */
-public class DynamicsCRMClient {
+public class DynamicsCRMClient implements IHttpClientFactoryObserver {
 
     private static final String NAMESPAVE = "Microsoft.Dynamics.CRM";
 
@@ -75,18 +84,18 @@ public class DynamicsCRMClient {
 
     private ODataClient odataClient;
 
-    private DefaultHttpClient httpClient;
+    private DefaultHttpClientState httpClientState;
 
-    private HttpClientFactory httpClientFactory;
+    private IHttpclientFactoryObservable httpClientFactory;
 
-    private AuthenticationResult authResult;
+    private IAuthStrategy authStrategy;
 
     private String entitySet;
 
     private String entityType;
 
     public DynamicsCRMClient(ClientConfiguration clientConfiguration, String serviceRootURL, String entitySet)
-            throws ServiceUnavailableException {
+            throws AuthenticationException {
         this.clientConfiguration = clientConfiguration;
 
         this.serviceRootURL = serviceRootURL;
@@ -96,65 +105,38 @@ public class DynamicsCRMClient {
         init();
     }
 
-    private void init() throws ServiceUnavailableException {
+    private void init() throws AuthenticationException {
         odataClient = ODataClientFactory.getClient();
         if (clientConfiguration != null && serviceRootURL != null && serviceRootURL.indexOf("/api/data") > 0) {
             clientConfiguration.setResource(serviceRootURL.substring(0, serviceRootURL.indexOf("/api/data")));
         }
-        authResult = getAccessToken();
 
-        httpClientFactory = new DefaultHttpClientFactory() {
+        authStrategy = AuthStrategyFactory.createAuthStrategy(this.clientConfiguration);
+        authStrategy.init();
 
-            @Override
-            public DefaultHttpClient create(final HttpMethod method, final URI uri) {
-                if (!clientConfiguration.isReuseHttpClient() || httpClient == null) {
-                    httpClient = super.create(method, uri);
+        httpClientFactory = authStrategy.getHttpClientFactory();
+        httpClientFactory.addListener(this);
 
-                    HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), clientConfiguration.getTimeout() * 1000);
-                    HttpConnectionParams.setSoTimeout(httpClient.getParams(), clientConfiguration.getTimeout() * 1000);
+        odataClient.getConfiguration().setHttpClientFactory((DefaultHttpClientFactory) httpClientFactory);
 
-                    // setup proxy
-                    setHttpclientProxy(httpClient);
-                }
-                return httpClient;
-            }
+        ((DefaultHttpClientFactory) httpClientFactory).create(null, null);
 
-        };
-        odataClient.getConfiguration().setHttpClientFactory(httpClientFactory);
+    }
 
-        httpClient = (DefaultHttpClient) httpClientFactory.create(null, null);
+    @Override
+    public void httpClientCreated(DefaultHttpClientState httpClientState) {
+        this.httpClientState = httpClientState;
 
+        HttpConnectionParams.setConnectionTimeout(httpClientState.getHttpClient().getParams(),
+                clientConfiguration.getTimeout() * 1000);
+        HttpConnectionParams.setSoTimeout(httpClientState.getHttpClient().getParams(), clientConfiguration.getTimeout() * 1000);
+
+        // setup proxy
+        setHttpclientProxy(httpClientState.getHttpClient());
     }
 
     public ODataClient getClient() {
         return odataClient;
-    }
-
-    protected AuthenticationResult getAccessToken() throws ServiceUnavailableException {
-        AuthenticationContext context = null;
-        AuthenticationResult result = null;
-        ExecutorService service = null;
-        try {
-            service = Executors.newFixedThreadPool(1);
-            context = new AuthenticationContext(clientConfiguration.getAuthoryEndpoint(), false, service);
-            Proxy proxy = getProxy();
-            if (proxy != null) {
-                context.setProxy(proxy);
-            }
-            Future<AuthenticationResult> future = context.acquireToken(clientConfiguration.getResource(),
-                    clientConfiguration.getClientId(), clientConfiguration.getUserName(), clientConfiguration.getPassword(),
-                    null);
-            result = future.get();
-        } catch (Exception e) {
-            throw new ServiceUnavailableException(e.getMessage());
-        } finally {
-            service.shutdown();
-        }
-
-        if (result == null) {
-            throw new ServiceUnavailableException("Authenticated failed! Please check your configuration!");
-        }
-        return result;
     }
 
     /**
@@ -180,7 +162,9 @@ public class DynamicsCRMClient {
         }
         ODataEntitySetRequest<ClientEntitySet> request = odataClient.getRetrieveRequestFactory()
                 .getEntitySetRequest(uriBuilder.build());
-        request.addCustomHeader(HttpHeader.AUTHORIZATION, "Bearer " + authResult.getAccessToken());
+
+        this.authStrategy.configureRequest(request);
+
         return request;
     }
 
@@ -193,7 +177,7 @@ public class DynamicsCRMClient {
      * 
      * @throws ServiceUnavailableException
      */
-    public ClientEntitySet retrieveEntities(QueryOptionConfig queryOption) throws ServiceUnavailableException {
+    public ClientEntitySet retrieveEntities(QueryOptionConfig queryOption) throws AuthenticationException {
         boolean hasRetried = false;
         while (true) {
             ODataRetrieveResponse<ClientEntitySet> response = null;
@@ -206,7 +190,7 @@ public class DynamicsCRMClient {
             } catch (ODataClientErrorException clientException) {
                 // If get 401 Unauthorized, it would refresh the token
                 if (clientException.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED && !hasRetried) {
-                    refreshToken();
+                    this.authStrategy.refreshAuth();
                     hasRetried = true;
                     continue;
                 }
@@ -276,7 +260,8 @@ public class DynamicsCRMClient {
         uriBuilder.filter("EntitySetName eq '" + entitySetName + "'");
         ODataEntitySetIteratorRequest<ClientEntitySet, ClientEntity> request = odataClient.getRetrieveRequestFactory()
                 .getEntitySetIteratorRequest(uriBuilder.build());
-        request.addCustomHeader(HttpHeader.AUTHORIZATION, "Bearer " + authResult.getAccessToken());
+        this.authStrategy.configureRequest(request);
+
         ODataRetrieveResponse<ClientEntitySetIterator<ClientEntitySet, ClientEntity>> response = request.execute();
         try {
             ClientEntitySetIterator<ClientEntitySet, ClientEntity> entitySetIterator = response.getBody();
@@ -289,7 +274,7 @@ public class DynamicsCRMClient {
         } finally {
             response.close();
             // Close reponse would also close connection. So here need recreate httpclient
-            httpClient = null;
+            this.httpClientState.setNeedNewHttpClient(true);
         }
         return null;
     }
@@ -366,10 +351,11 @@ public class DynamicsCRMClient {
 
     protected HttpResponse createAndExecuteRequest(URI uri, HttpEntity httpEntity, HttpMethod method)
             throws ServiceUnavailableException {
+
         boolean hasRetried = false;
         while (true) {
             try {
-                httpClient = (DefaultHttpClient) httpClientFactory.create(null, null);
+                ((DefaultHttpClientFactory) httpClientFactory).create(null, null);
                 HttpRequestBase request = null;
                 if (method == HttpMethod.POST) {
                     request = new HttpPost(uri);
@@ -380,18 +366,19 @@ public class DynamicsCRMClient {
                 } else {
                     throw new HttpClientException("Unsupported operation:" + method);
                 }
-                request.addHeader(HttpHeader.AUTHORIZATION, "Bearer " + authResult.getAccessToken());
+                this.authStrategy.configureRequest(request);
+
                 if (request instanceof HttpEntityEnclosingRequestBase) {
                     ((HttpEntityEnclosingRequestBase) request).setEntity(httpEntity);
                 }
-                HttpResponse response = httpClient.execute(request);
+                HttpResponse response = httpClientState.getHttpClient().execute(request);
                 if (isResponseSuccess(response.getStatusLine().getStatusCode())) {
                     request.releaseConnection();
                     EntityUtils.consume(response.getEntity());
                     return response;
                 } else {
                     if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED && !hasRetried) {
-                        refreshToken();
+                        this.authStrategy.refreshAuth();
                         hasRetried = true;
                         continue;
                     }
@@ -407,32 +394,6 @@ public class DynamicsCRMClient {
             } catch (Exception e) {
                 throw new HttpClientException(e);
             }
-        }
-    }
-
-    /**
-     * Refresh token when expired
-     */
-    public void refreshToken() throws ServiceUnavailableException {
-        int retryTime = 0;
-        // refresh the access token
-        while (true) {
-            try {
-                this.authResult = getAccessToken();
-                break;// refresh token successfully
-            } catch (ServiceUnavailableException e) {
-                if (retryTime < clientConfiguration.getMaxRetryTimes()) {
-                    retryTime++;
-                    try {
-                        Thread.sleep(clientConfiguration.getIntervalTime());
-                    } catch (InterruptedException e1) {
-                        // ignore
-                    }
-                    continue;// retry to refresh token
-                }
-                throw e;// failed to refresh token after retry
-            }
-
         }
     }
 
@@ -454,10 +415,9 @@ public class DynamicsCRMClient {
      * Setup proxy for httpClient
      */
     private void setHttpclientProxy(DefaultHttpClient httpClient) {
-
-        Proxy proxy = getProxy();
-        String proxyUser = System.getProperty("https.proxyUser");
-        String proxyPwd = System.getProperty("https.proxyPassword");
+        Proxy proxy = ProxyProvider.getProxy();
+        String proxyUser = ProxyProvider.getProxyUserName();
+        String proxyPwd = ProxyProvider.getProxyUserPassword();
         // set by other components like tSetProxy
         if (proxy != null) {
 
@@ -475,24 +435,6 @@ public class DynamicsCRMClient {
 
         }
 
-    }
-
-    /**
-     * Get the proxy setting if there is proxy for system
-     */
-    private Proxy getProxy() {
-        String proxyHost = System.getProperty("https.proxyHost");
-        String proxyPort = System.getProperty("https.proxyPort");
-        if (proxyHost != null) {
-            int port = -1;
-            if (proxyPort != null && proxyPort.length() > 0) {
-                port = Integer.parseInt(proxyPort);
-            }
-            SocketAddress addr = new InetSocketAddress(proxyHost, port);
-            Proxy proxy = new Proxy(Proxy.Type.HTTP, addr);
-            return proxy;
-        }
-        return null;
     }
 
 }
