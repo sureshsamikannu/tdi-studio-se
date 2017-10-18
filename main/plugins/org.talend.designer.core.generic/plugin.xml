@@ -171,6 +171,11 @@
              name="widget.type.memoSql"
              widgetType="widget.type.memoSql">
        </Mapping>
+       <Mapping
+             mapFieldType="MAPPING_TYPE"
+             name="widget.type.mappingType"
+             widgetType="widget.type.mappingType">
+       </Mapping>
    </extension>
    <extension
          point="org.talend.designer.core.generators">

@@ -84,8 +84,7 @@ public class MappingTypeController extends AbstractElementPropertySectionControl
                 Object data = ctrl.getData(PARAMETER_NAME);
                 if (data != null && data.equals(combo.getData(PARAMETER_NAME)) && ctrl instanceof CCombo) {
                     boolean isDisposed = ((CCombo) ctrl).isDisposed();
-                    if (!isDisposed && (!elem.getPropertyValue(name).equals(((CCombo) ctrl).getText()))) {
-
+                    if (!isDisposed && isValueChanged(elem.getPropertyValue(name), ((CCombo) ctrl).getText())) {
                         String value = new String(""); //$NON-NLS-1$
                         for (int i = 0; i < elem.getElementParameters().size(); i++) {
                             IElementParameter param = elem.getElementParameters().get(i);
@@ -103,6 +102,18 @@ public class MappingTypeController extends AbstractElementPropertySectionControl
             }
         }
         return null;
+    }
+
+    private boolean isValueChanged(Object o1, String s2) {
+        if (o1 == null && s2 == null) {
+            return false;
+        }
+
+        if (o1 == null) {
+            return true;
+        } else {
+            return !o1.equals(s2);
+        }
     }
 
     IControlCreator cbCtrl = new IControlCreator() {
@@ -124,13 +135,13 @@ public class MappingTypeController extends AbstractElementPropertySectionControl
 
         DecoratedField dField = new DecoratedField(subComposite, SWT.BORDER, cbCtrl);
         if (param.isRequired()) {
-            FieldDecoration decoration = FieldDecorationRegistry.getDefault().getFieldDecoration(
-                    FieldDecorationRegistry.DEC_REQUIRED);
+            FieldDecoration decoration = FieldDecorationRegistry.getDefault()
+                    .getFieldDecoration(FieldDecorationRegistry.DEC_REQUIRED);
             dField.addFieldDecoration(decoration, SWT.RIGHT | SWT.TOP, false);
         }
         if (param.isRepositoryValueUsed()) {
-            FieldDecoration decoration = FieldDecorationRegistry.getDefault().getFieldDecoration(
-                    FieldDecorationRegistry.DEC_CONTENT_PROPOSAL);
+            FieldDecoration decoration = FieldDecorationRegistry.getDefault()
+                    .getFieldDecoration(FieldDecorationRegistry.DEC_CONTENT_PROPOSAL);
             decoration.setDescription(Messages.getString("ComboController.valueFromRepository")); //$NON-NLS-1$
             dField.addFieldDecoration(decoration, SWT.RIGHT | SWT.BOTTOM, false);
         }
@@ -196,7 +207,9 @@ public class MappingTypeController extends AbstractElementPropertySectionControl
     /*
      * (non-Javadoc)
      * 
-     * @see org.talend.designer.core.ui.editor.properties.controllers.AbstractElementPropertySectionController#estimateRowSize(org.eclipse.swt.widgets.Composite,
+     * @see
+     * org.talend.designer.core.ui.editor.properties.controllers.AbstractElementPropertySectionController#estimateRowSize(org.
+     * eclipse.swt.widgets.Composite,
      * org.talend.core.model.process.IElementParameter)
      */
     @Override
