@@ -223,7 +223,23 @@ skeleton="../templates/db_output_bulk.skeleton"
     		} else {
         <%
         }
+          boolean useSSL = ("true").equals(ElementParameterParser.getValue(node,"__USE_SSL__"));
+          String connectionType = ElementParameterParser.getValue(node, "__CONNECTION_TYPE__");
+          if("ORACLE_RAC".equals(connectionType) && useSSL){
+              String walletType = ElementParameterParser.getValue(node,"__WALLET_TYPE__");
+              if("PKCS12".equals(walletType)){
+              %>
+                  java.security.Security.insertProviderAt(new oracle.security.pki.OraclePKIProvider(), 3);
+              <%
+              }
+              if("SSO".equals(walletType)){
+              %>
+                  java.security.Security.addProvider(new oracle.security.pki.OraclePKIProvider());
+              <%
+              }
+          }
         %>
+        
                 <%if("ORACLE_11".equals(dbVersion) || "ORACLE_11-6".equals(dbVersion) || "ORACLE_12".equals(dbVersion)){%>
                     String driverClass_<%=cid%> = "oracle.jdbc.OracleDriver";
                 <%}else {%>
@@ -234,7 +250,6 @@ skeleton="../templates/db_output_bulk.skeleton"
 
                 java.lang.Class.forName(driverClass_<%=cid%>);
                 <%
-                String connectionType = ElementParameterParser.getValue(node, "__CONNECTION_TYPE__");
                 String jdbcURL = ElementParameterParser.getValue(node, "__JDBC_URL__");
                 String rac_url = ElementParameterParser.getValue(node, "__RAC_URL__");
                 %>
@@ -291,8 +306,21 @@ skeleton="../templates/db_output_bulk.skeleton"
                 } else {
                 %>
                     java.util.Properties atnParamsPrope_<%=cid%> = new java.util.Properties();
-                    atnParamsPrope_<%=cid%>.put("user",dbUser_<%=cid%>);
-                    atnParamsPrope_<%=cid%>.put("password",dbPwd_<%=cid%>);
+                    <%
+                	if("ORACLE_RAC".equals(connectionType) && useSSL){
+                    %>
+			        	if(dbUser_<%=cid%>!=null && dbPwd_<%=cid%>!=null && !"".equals(dbUser_<%=cid%>)&& !"".equals(dbPwd_<%=cid%>)){
+			            	atnParamsPrope_<%=cid%>.put("user",dbUser_<%=cid%>);
+			            	atnParamsPrope_<%=cid%>.put("password",dbPwd_<%=cid%>);
+						}
+                    <%
+					}else{
+                    %>
+			        	atnParamsPrope_<%=cid%>.put("user",dbUser_<%=cid%>);
+			        	atnParamsPrope_<%=cid%>.put("password",dbPwd_<%=cid%>);
+                    <%
+					}
+                    %>
                     if(<%= dbproperties %> != null && !"\"\"".equals(<%= dbproperties %>) && !"".equals(<%= dbproperties %>)){
                         atnParamsPrope_<%=cid%>.load(new java.io.ByteArrayInputStream(<%=dbproperties%>.replace("&", "\n").getBytes()));
                     }
