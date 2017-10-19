@@ -29,7 +29,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jdt.core.IJavaProject;
@@ -595,8 +595,8 @@ public class DefaultRunProcessService implements IRunProcessService {
     }
 
     @Override
-    public void initMavenJavaProject(Project project) {
-        TalendJavaProjectManager.initJavaProjects(project);
+    public void initMavenJavaProject(IProgressMonitor monitor, Project project) {
+        TalendJavaProjectManager.initJavaProjects(monitor, project);
     }
 
     @Override

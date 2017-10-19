@@ -19,6 +19,7 @@ import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -391,8 +392,8 @@ public class RunProcessService implements IRunProcessService {
     }
 
     @Override
-    public void initMavenJavaProject(Project project) {
-        delegateService.initMavenJavaProject(project);
+    public void initMavenJavaProject(IProgressMonitor monitor, Project project) {
+        delegateService.initMavenJavaProject(monitor, project);
     }
 
     @Override
