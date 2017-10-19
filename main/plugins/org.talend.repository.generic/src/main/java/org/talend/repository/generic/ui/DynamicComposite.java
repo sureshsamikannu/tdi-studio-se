@@ -112,7 +112,7 @@ public class DynamicComposite extends MissingSettingsMultiThreadDynamicComposite
         }
         resetParameters();
     }
-    
+
     public DynamicComposite(Composite parentComposite, int styles, EComponentCategory section, Element element,
             ConnectionItem connectionItem, boolean isCompactView, Color backgroundColor, Form form, boolean drivedByForm) {
         super(parentComposite, styles, section, element, isCompactView, backgroundColor);
@@ -201,9 +201,10 @@ public class DynamicComposite extends MissingSettingsMultiThreadDynamicComposite
                         && theConnection != null) {
                     List<NamedThing> values = new ArrayList<>();
                     List<MetadataTable> metadataTables = null;
-                    if(connectionItem.getTypeName() != null && SchemaUtils.isExtraDBType(ERepositoryObjectType.valueOf(connectionItem.getTypeName()))){
+                    if (connectionItem.getTypeName() != null
+                            && SchemaUtils.isExtraDBType(ERepositoryObjectType.valueOf(connectionItem.getTypeName()))) {
                         metadataTables = ConnectionHelper.getTablesWithOrders(theConnection);
-                    }else{
+                    } else {
                         metadataTables = SchemaUtils.getMetadataTables(theConnection, SubContainer.class);
                     }
                     List<String> tableLabels = new ArrayList<>();
@@ -230,12 +231,13 @@ public class DynamicComposite extends MissingSettingsMultiThreadDynamicComposite
                             genericElementParameter.setReadOnly(true);
                         }
                         Properties pros = properties.getProperties(genericElementParameter.getName());
-                        if(pros != null){
+                        if (pros != null) {
                             boolean isRepValueUsed = true;
-                            for(NamedThing thing : pros.getProperties()){
-                                if(thing instanceof Property){
-                                    boolean result = ((Property)thing).getTaggedValue(IGenericConstants.REPOSITORY_VALUE) != null;
-                                    if(!result){
+                            for (NamedThing thing : pros.getProperties()) {
+                                if (thing instanceof Property) {
+                                    boolean result = ((Property) thing)
+                                            .getTaggedValue(IGenericConstants.REPOSITORY_VALUE) != null;
+                                    if (!result) {
                                         isRepValueUsed = false;
                                     }
                                 }
@@ -249,9 +251,7 @@ public class DynamicComposite extends MissingSettingsMultiThreadDynamicComposite
         }
 
         boolean added = false;
-        for (
-
-        ElementParameter currentParameter : currentParameters) {
+        for (ElementParameter currentParameter : currentParameters) {
             if (EParameterName.UPDATE_COMPONENTS.getName().equals(currentParameter.getName())) {
                 currentParameter.setValue(true);
             }
@@ -496,7 +496,7 @@ public class DynamicComposite extends MissingSettingsMultiThreadDynamicComposite
         this.wizardPropertyChangeListener = wizardPropertyChangeListener;
     }
 
-    public Form getForm(){
+    public Form getForm() {
         return this.form;
     }
 }

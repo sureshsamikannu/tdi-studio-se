@@ -97,7 +97,14 @@ public class QueryTypeController extends AbstractRepositoryController {
         if (queryStoreTypeParameter != null) {
             String queryStoreType = (String) queryStoreTypeParameter.getValue();
             if (queryStoreType != null && queryStoreType.equals(EmfComponent.BUILTIN)) {
-                lastControlUsed = addGuessQueryButton(subComposite, param, lastControlUsed, numInRow, top);
+                boolean newFramework = false;
+                if (param.getElement() instanceof INode) {
+                    INode node = (INode) param.getElement();
+                    newFramework = node.getComponentProperties() != null;
+                }
+                if (!newFramework) {
+                    lastControlUsed = addGuessQueryButton(subComposite, param, lastControlUsed, numInRow, top);
+                }
             }
         }
 
@@ -197,8 +204,8 @@ public class QueryTypeController extends AbstractRepositoryController {
         // Only for getting the real table name.
         if (elem.getPropertyValue(EParameterName.SCHEMA_TYPE.getName()).equals(EmfComponent.REPOSITORY)) {
 
-            IElementParameter repositorySchemaTypeParameter = elem.getElementParameter(EParameterName.REPOSITORY_SCHEMA_TYPE
-                    .getName());
+            IElementParameter repositorySchemaTypeParameter = elem
+                    .getElementParameter(EParameterName.REPOSITORY_SCHEMA_TYPE.getName());
 
             if (repositorySchemaTypeParameter != null) {
                 final Object value = repositorySchemaTypeParameter.getValue();
@@ -335,10 +342,8 @@ public class QueryTypeController extends AbstractRepositoryController {
             if (schemaSelected != null) {
                 // repositoryMetadata = repositoryTableMap.get(schemaSelected);
             } else if (newRepositoryMetadata == null) {
-                MessageDialog
-                        .openWarning(
-                                new Shell(),
-                                Messages.getString("QueryTypeController.alert"), Messages.getString("QueryTypeController.nothingToGuess")); //$NON-NLS-1$ //$NON-NLS-2$
+                MessageDialog.openWarning(new Shell(), Messages.getString("QueryTypeController.alert"), //$NON-NLS-1$
+                        Messages.getString("QueryTypeController.nothingToGuess")); //$NON-NLS-1$
                 return cmd;
             }
         }

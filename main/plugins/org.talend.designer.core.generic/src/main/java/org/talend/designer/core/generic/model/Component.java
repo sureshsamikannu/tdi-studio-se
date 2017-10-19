@@ -189,9 +189,9 @@ public class Component extends AbstractBasicComponent {
         if (node.getComponentProperties() == null) {
             node.setComponentProperties(ComponentsUtils.getComponentProperties(getName()));
         }
-        List<ElementParameter> listParam;
-        listParam = new ArrayList<>();
+        List<ElementParameter> listParam = new ArrayList<>();
         addMainParameters(listParam, node);
+        node.setElementParameters(listParam); // initialize the parameters to setup the querystore, since it's needed for the jdbc components
         addPropertyParameters(listParam, node, Form.MAIN, EComponentCategory.BASIC);
         addPropertyParameters(listParam, node, Form.ADVANCED, EComponentCategory.ADVANCED);
         initializeParametersForSchema(listParam, node);
@@ -671,6 +671,41 @@ public class Component extends AbstractBasicComponent {
         newParam.setSerialized(true);
         newParam.setParentParameter(param);
         listParam.add(param);
+        
+        ElementParameter sibling_param = new ElementParameter(node);
+        sibling_param.setName("QUERYSTORE");
+        sibling_param.setCategory(EComponentCategory.BASIC);
+        sibling_param.setDisplayName(EParameterName.QUERYSTORE_TYPE.getDisplayName());
+        sibling_param.setFieldType(EParameterFieldType.QUERYSTORE_TYPE);
+        sibling_param.setNumRow(0);
+        sibling_param.setShow(false);
+        sibling_param.setValue("");
+        listParam.add(sibling_param);
+
+        newParam = new ElementParameter(node);
+        newParam.setCategory(EComponentCategory.BASIC);
+        newParam.setName(EParameterName.QUERYSTORE_TYPE.getName());
+        newParam.setDisplayName(EParameterName.QUERYSTORE_TYPE.getDisplayName());
+        newParam.setListItemsDisplayName(new String[] { EmfComponent.TEXT_BUILTIN, EmfComponent.TEXT_REPOSITORY });
+        newParam.setListItemsDisplayCodeName(new String[] { EmfComponent.BUILTIN, EmfComponent.REPOSITORY });
+        newParam.setListItemsValue(new String[] { EmfComponent.BUILTIN, EmfComponent.REPOSITORY });
+        newParam.setValue(EmfComponent.BUILTIN);
+        newParam.setNumRow(0);
+        newParam.setFieldType(EParameterFieldType.TECHNICAL);
+        newParam.setParentParameter(sibling_param);
+
+        newParam = new ElementParameter(node);
+        newParam.setCategory(EComponentCategory.BASIC);
+        newParam.setName(EParameterName.REPOSITORY_QUERYSTORE_TYPE.getName());
+        newParam.setDisplayName(EParameterName.REPOSITORY_QUERYSTORE_TYPE.getDisplayName());
+        newParam.setListItemsDisplayName(new String[] {});
+        newParam.setListItemsValue(new String[] {});
+        newParam.setNumRow(0);
+        newParam.setFieldType(EParameterFieldType.TECHNICAL);
+        newParam.setValue("");
+        newParam.setRequired(true);
+        newParam.setParentParameter(sibling_param);
+        newParam.setShow(false);
 
         if (ComponentCategory.CATEGORY_4_DI.getName().equals(this.getPaletteType())) {
             boolean isStatCatcherComponent = false;
@@ -717,8 +752,7 @@ public class Component extends AbstractBasicComponent {
             param.setFieldType(EParameterFieldType.TEXT);
             param.setCategory(EComponentCategory.ADVANCED);
             param.setNumRow(201);
-            //param.setShowIf(EParameterName.PARALLELIZE.getName() + " == 'true'"); //$NON-NLS-1$
-            //FIXME how to do the show if? now only show it always
+            param.setShowIf(EParameterName.PARALLELIZE.getName() + " == 'true'"); //$NON-NLS-1$
             param.setShow(true);
             param.setDefaultValue(param.getValue());
             listParam.add(param);

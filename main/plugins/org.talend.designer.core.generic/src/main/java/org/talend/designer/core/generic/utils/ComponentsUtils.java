@@ -75,8 +75,11 @@ import org.talend.designer.core.generic.model.GenericTableUtils;
 import org.talend.designer.core.generic.model.mapping.WidgetFieldTypeMapper;
 import org.talend.designer.core.generic.palette.GenericComponentCategoryFactory;
 import org.talend.designer.core.model.FakeElement;
+import org.talend.designer.core.model.components.AbstractBasicComponent;
+import org.talend.designer.core.model.components.EParameterName;
 import org.talend.designer.core.model.components.ElementParameter;
 import org.talend.designer.core.model.components.ElementParameterDefaultValue;
+import org.talend.designer.core.model.components.EmfComponent;
 import org.talend.metadata.managment.ui.wizard.context.MetadataContextPropertyValueEvaluator;
 
 /**
@@ -326,8 +329,19 @@ public class ComponentsUtils {
                     }
                 }
             }
+
             if (widgetProperty instanceof PresentationItem) {
                 param.setValue(widgetProperty.getDisplayName());
+                if (param.getName().equals("guessQueryFromSchema")) {
+                    IElementParameter sibling_param = element.getElementParameter("QUERYSTORE");
+                    if (sibling_param != null) {
+                        sibling_param.setShow(true);
+                        sibling_param.setNumRow(rowNum);
+                        sibling_param.getChildParameters().get(EParameterName.QUERYSTORE_TYPE.getName()).setNumRow(rowNum);
+                        sibling_param.getChildParameters().get(EParameterName.REPOSITORY_QUERYSTORE_TYPE.getName()).setNumRow(rowNum);
+                        param.setShowIf(EParameterName.QUERYSTORE_TYPE.getName() + " =='" + AbstractBasicComponent.BUILTIN + "'");
+                    }
+                }
             } else if (widgetProperty instanceof Property) {
                 Property property = (Property) widgetProperty;
                 param.setRequired(property.isRequired());
@@ -385,12 +399,12 @@ public class ComponentsUtils {
                 // table is always empty by default
                 param.setSupportContext(isSupportContext(table));
                 Boolean isReadOnly = null;
-                for(ElementParameter e : parameters){
-                    if(isReadOnly == null){
+                for (ElementParameter e : parameters) {
+                    if (isReadOnly == null) {
                         isReadOnly = e.isReadOnly();
                     }
-                    if(!e.isReadOnly()){
-                        isReadOnly = false; 
+                    if (!e.isReadOnly()) {
+                        isReadOnly = false;
                     }
                 }
                 param.setReadOnly(isReadOnly);
@@ -422,6 +436,7 @@ public class ComponentsUtils {
                 param.setBasedOnSchema(
                         Boolean.valueOf(String.valueOf(widget.getConfigurationValue(Widget.HIDE_TOOLBAR_WIDGET_CONF))));
             }
+
             if (!param.isReadOnly()) {
                 param.setReadOnly(widget.isReadonly() || element.isReadOnly());
             }
@@ -503,12 +518,13 @@ public class ComponentsUtils {
         return params;
     }
 
-    public static Object getParameterValue(IElement element, Property property, EParameterFieldType fieldType, String parameterName) {
+    public static Object getParameterValue(IElement element, Property property, EParameterFieldType fieldType,
+            String parameterName) {
         Object paramValue = property.getStoredValue();
-        if (paramValue instanceof List ) {
-            if(ContextParameterUtils.isContainContextParam(String.valueOf(paramValue))){
-                return ((List)paramValue).get(0);
-            }else{
+        if (paramValue instanceof List) {
+            if (ContextParameterUtils.isContainContextParam(String.valueOf(paramValue))) {
+                return ((List) paramValue).get(0);
+            } else {
                 return null;
             }
         }
@@ -526,7 +542,8 @@ public class ComponentsUtils {
             if (element.getElementParameters() != null) {
                 oldParam = element.getElementParameter(parameterName);
             }
-            if (oldParam == null || oldParam.getValue() == null || !StringUtils.equals((String) oldParam.getValue(), (String) property.getStoredValue())) {
+            if (oldParam == null || oldParam.getValue() == null
+                    || !StringUtils.equals((String) oldParam.getValue(), (String) property.getStoredValue())) {
                 // if parameter is not setup yet (= initialization)
                 // then we set the value and check if we need to add quotes.
                 //
@@ -538,7 +555,8 @@ public class ComponentsUtils {
             String value = (String) paramValue;
             // If property is not initialized by client and value is not context mode and is not in wizard then add
             // double quotes.
-            if (needInitializeProperty && !(element instanceof FakeElement || ContextParameterUtils.isContainContextParam(value))) {
+            if (needInitializeProperty
+                    && !(element instanceof FakeElement || ContextParameterUtils.isContainContextParam(value))) {
                 if (value == null) {
                     value = StringUtils.EMPTY;
                 }
@@ -712,11 +730,11 @@ public class ComponentsUtils {
             return true;
         }
     }
-    
+
     public static boolean isSupportContext(Properties properties) {
-        for(NamedThing thing:properties.getProperties()){
-            if(thing instanceof Property){
-                if (GenericTypeUtils.isSchemaType((Property)thing)) {
+        for (NamedThing thing : properties.getProperties()) {
+            if (thing instanceof Property) {
+                if (GenericTypeUtils.isSchemaType((Property) thing)) {
                     return false;
                 }
             }
