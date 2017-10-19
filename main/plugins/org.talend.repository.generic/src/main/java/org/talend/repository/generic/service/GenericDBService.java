@@ -49,6 +49,7 @@ import org.talend.core.model.properties.Item;
 import org.talend.core.model.properties.Property;
 import org.talend.core.repository.model.ProxyRepositoryFactory;
 import org.talend.core.model.repository.ERepositoryObjectType;
+import org.talend.core.model.repository.IRepositoryViewObject;
 import org.talend.core.runtime.services.IGenericDBService;
 import org.talend.core.runtime.util.GenericTypeUtils;
 import org.talend.core.ui.check.IChecker;
@@ -56,7 +57,6 @@ import org.talend.daikon.NamedThing;
 import org.talend.daikon.properties.Properties;
 import org.talend.daikon.properties.PropertiesImpl;
 import org.talend.daikon.properties.presentation.Form;
-import org.talend.daikon.properties.property.StringProperty;
 import org.talend.designer.core.generic.constants.IGenericConstants;
 import org.talend.designer.core.generic.model.GenericElementParameter;
 import org.talend.designer.core.generic.utils.ComponentsUtils;
@@ -185,17 +185,25 @@ public class GenericDBService implements IGenericDBService{
 
             @Override
             public void run(IProgressMonitor monitor) throws CoreException {
+                ConnectionItem connItem = item;
                 try {
                     if (form != null && form.isCallAfterFormFinish()) {
                         if (creation) {
-                            factory.create(item, pathToSave);
+                            factory.create(connItem, pathToSave);
                         }
                         compService.afterFormFinish(form.getName(), form.getProperties());
                     }
-                    convertPropertiesToDBElements(form.getProperties(), item.getConnection());
-                    factory.save(item);
+                    IRepositoryViewObject repViewObj = factory.getLastVersion(connItem.getProperty().getId());
+                    if(repViewObj != null){
+                        Property property = repViewObj.getProperty();
+                        if (property != null) {
+                            connItem = (ConnectionItem) property.getItem();
+                        }
+                    }
+                    convertPropertiesToDBElements(form.getProperties(), connItem.getConnection());
+                    factory.save(connItem);
                 } catch (Throwable e) {
-                    //e.printStackTrace();
+                    e.printStackTrace();
                     throw new CoreException(new Status(IStatus.ERROR, IGenericConstants.REPOSITORY_PLUGIN_ID,
                             "Error when saving the connection", e));
                 }
