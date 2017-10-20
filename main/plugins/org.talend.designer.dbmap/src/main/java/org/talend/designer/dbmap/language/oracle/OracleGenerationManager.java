@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.talend.core.model.metadata.IMetadataColumn;
 import org.talend.core.model.metadata.IMetadataTable;
@@ -253,7 +254,7 @@ public class OracleGenerationManager extends DbGenerationManager {
                         // if (rightTable != null) {
                         // } else {
                         // sb.append(" <!! NO JOIN CLAUSES FOR '" + inputTable.getName() + "' !!> ");
-                        // }                       
+                        // }
                         appendSqlQuery(sb, DbMapSqlConstants.SPACE);
                         appendSqlQuery(sb, DbMapSqlConstants.ON);
                         appendSqlQuery(sb, DbMapSqlConstants.LEFT_BRACKET);
@@ -333,7 +334,7 @@ public class OracleGenerationManager extends DbGenerationManager {
             }
             if (whereAddFlag) {
                 for (int i = 0; i < whereAddition.size(); i++) {
-                    if (i == 0 && whereFlag || i > 0) {                      
+                    if (i == 0 && whereFlag || i > 0) {
                         appendSqlQuery(sb, DbMapSqlConstants.NEW_LINE);
                         appendSqlQuery(sb, tabSpaceString);
                         appendSqlQuery(sb, DbMapSqlConstants.SPACE);
@@ -375,6 +376,7 @@ public class OracleGenerationManager extends DbGenerationManager {
                 }
                 replaceQueryContext(queryColumnsSegments, context);
             }
+
             if (!haveReplace) {
                 List<String> connContextList = getConnectionContextList(component);
                 for (String context : connContextList) {
@@ -387,6 +389,18 @@ public class OracleGenerationManager extends DbGenerationManager {
                     }
                     replaceQueryContext(queryColumnsSegments, context);
                 }
+            }
+            Set<String> globalMapList = getGlobalMapList(component, sqlQuery);
+            for (String globalMapStr : globalMapList) {
+                String regex = globalMapStr.replaceAll("\\(", "\\\\(").replaceAll("\\)", "\\\\)").replaceAll("\\\"", "\\\\\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+                if (globalMapStr.contains(globalMapStr)) {
+                    sqlQuery = sqlQuery.replaceAll(regex, "\" +" + globalMapStr + "+ \""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                }
+                replaceQueryGlobalMap(querySegments, regex, globalMapStr);
+                if (queryColumnsName.contains(globalMapStr)) {
+                    queryColumnsName = queryColumnsName.replaceAll(regex, "\" +" + globalMapStr + "+ \""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                }
+                replaceQueryGlobalMap(queryColumnsSegments, regex, globalMapStr);
             }
         }
         sqlQuery = handleQuery(sqlQuery);

@@ -48,6 +48,7 @@ import org.talend.designer.dbmap.language.IJoinType;
 import org.talend.designer.dbmap.language.operator.IDbOperator;
 import org.talend.designer.dbmap.language.operator.IDbOperatorManager;
 import org.talend.designer.dbmap.model.tableentry.TableEntryLocation;
+import org.talend.designer.dbmap.utils.DataMapExpressionParser;
 
 /**
  * DOC amaumont class global comment. Detailled comment <br/>
@@ -70,9 +71,9 @@ public abstract class DbGenerationManager {
     protected String tabSpaceString = DEFAULT_TAB_SPACE_STRING;
 
     protected static final String DEFAULT_TAB_SPACE_STRING = ""; //$NON-NLS-1$
-    
+
     protected List<String> queryColumnsSegments = new ArrayList<String>();
-    
+
     protected List<String> querySegments = new ArrayList<String>();
 
     /**
@@ -258,7 +259,7 @@ public abstract class DbGenerationManager {
         aliasAlreadyDeclared.clear();
         queryColumnsSegments.clear();
         querySegments.clear();
-        
+
         this.tabSpaceString = tabString;
 
         List<IConnection> outputConnections = (List<IConnection>) component.getOutgoingConnections();
@@ -546,13 +547,25 @@ public abstract class DbGenerationManager {
                     replaceQueryContext(queryColumnsSegments, context);
                 }
             }
+            Set<String> globalMapList = getGlobalMapList(component, sqlQuery);
+            for (String globalMapStr : globalMapList) {
+                String regex = globalMapStr.replaceAll("\\(", "\\\\(").replaceAll("\\)", "\\\\)").replaceAll("\\\"", "\\\\\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+                if (globalMapStr.contains(globalMapStr)) {
+                    sqlQuery = sqlQuery.replaceAll(regex, "\" +" + globalMapStr + "+ \""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                }
+                replaceQueryGlobalMap(querySegments, regex, globalMapStr);
+                if (queryColumnsName.contains(globalMapStr)) {
+                    queryColumnsName = queryColumnsName.replaceAll(regex, "\" +" + globalMapStr + "+ \""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                }
+                replaceQueryGlobalMap(queryColumnsSegments, regex, globalMapStr);
+            }
         }
         sqlQuery = handleQuery(sqlQuery);
         queryColumnsName = handleQuery(queryColumnsName);
 
         return sqlQuery;
     }
-    
+
     protected void replaceQueryContext(List<String> querySegments, String context) {
         if (querySegments == null || querySegments.size() == 0) {
             return;
@@ -561,6 +574,16 @@ public abstract class DbGenerationManager {
             String segment = querySegments.get(i);
             if (segment.contains(context)) {
                 segment = segment.replaceAll("\\b" + context + "\\b", "\" +" + context + "+ \""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                querySegments.set(i, segment);
+            }
+        }
+    }
+
+    protected void replaceQueryGlobalMap(List<String> querySegments, String regex, String globalMapString) {
+        for (int i = 0; i < querySegments.size(); i++) {
+            String segment = querySegments.get(i);
+            if (segment.contains(globalMapString)) {
+                segment = segment.replaceAll(regex, "\" +" + globalMapString + "+ \""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                 querySegments.set(i, segment);
             }
         }
@@ -627,7 +650,13 @@ public abstract class DbGenerationManager {
         for (IContextParameter para : paraList) {
             contextList.add(ContextParameterUtils.JAVA_NEW_CONTEXT_PREFIX + para.getName());
         }
+
         return contextList;
+    }
+
+    protected Set<String> getGlobalMapList(DbMapComponent component, String sqlQuery) {
+        DataMapExpressionParser parser = new DataMapExpressionParser(language);
+        return parser.getGlobalMapSet(sqlQuery);
     }
 
     /**

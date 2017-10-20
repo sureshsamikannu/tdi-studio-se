@@ -35,18 +35,20 @@ import org.talend.designer.dbmap.model.tableentry.TableEntryLocation;
  */
 public class DataMapExpressionParser {
 
+    public static final String GLOBALMAP_PATTERN = "\\s*(\\(\\s*\\(\\s*String\\s*\\)\\s*globalMap\\s*\\.\\s*get\\s*\\(\\s*\\\"(\\w+)\\\"\\s*\\)\\s*\\))\\s*";
+
+    private final static String GLOBALMAP_EXPRESSION_PATTERN = "(" + GLOBALMAP_PATTERN + "\\.\\s*(\\w+)\\s*)";
+
     private final static String EXPRESSION_PATTERN = "(\\s*(\\w+)\\s*\\.\\s*(\\w+)\\s*\\.\\s*(\\w+)\\s*\\.\\s*(\\w+)\\s*\\.\\s*(\\w+)\\s*)" //$NON-NLS-1$
             + "|(\\s*(\\w+)\\s*\\.\\s*(\\w+)\\s*\\.\\s*(\\w+)\\s*\\.\\s*(\\w+)\\s*)" //$NON-NLS-1$
             + "|(\\s*(\\w+)\\s*\\.\\s*(\\w+)\\s*\\.\\s*(\\w+)\\s*)" //$NON-NLS-1$
-            + "|(\\s*(\\w+)\\s*\\.\\s*(\\w+)\\s*)"; //$NON-NLS-1$
+            + "|(\\s*(\\w+)\\s*\\.\\s*(\\w+)\\s*)" + "|" + GLOBALMAP_EXPRESSION_PATTERN; //$NON-NLS-1$
 
     private final String DOT_STR = "."; //$NON-NLS-1$
 
     private Perl5Matcher matcher = new Perl5Matcher();
 
     private Perl5Compiler compiler = new Perl5Compiler();
-
-    private Set<TableEntryLocation> resultList = new HashSet<TableEntryLocation>();
 
     private Pattern pattern;
 
@@ -72,7 +74,7 @@ public class DataMapExpressionParser {
     }
 
     public TableEntryLocation[] parseTableEntryLocations(String expression) {
-        resultList.clear();
+        Set<TableEntryLocation> resultList = new HashSet<TableEntryLocation>();
         if (expression != null) {
             matcher.setMultiline(true);
             if (patternMatcherInput == null) {
@@ -90,9 +92,8 @@ public class DataMapExpressionParser {
                             + matchResult.group(4) + DOT_STR + matchResult.group(5), matchResult.group(6));
                 } else if (matchResult.group(7) != null) {
                     // context.schema.table.comlumn | schema.context.table.comlumn
-                    location = new TableEntryLocation(
-                            matchResult.group(8) + DOT_STR + matchResult.group(9) + DOT_STR + matchResult.group(10),
-                            matchResult.group(11));
+                    location = new TableEntryLocation(matchResult.group(8) + DOT_STR + matchResult.group(9) + DOT_STR
+                            + matchResult.group(10), matchResult.group(11));
                 } else if (matchResult.group(12) != null) {
                     // schema.table.column
                     location = new TableEntryLocation(matchResult.group(13) + DOT_STR + matchResult.group(14),
@@ -100,6 +101,8 @@ public class DataMapExpressionParser {
                 } else if (matchResult.group(16) != null) {
                     // table.column
                     location = new TableEntryLocation(matchResult.group(17), matchResult.group(18));
+                } else if (matchResult.group(19) != null) {
+                    location = new TableEntryLocation(matchResult.group(20), matchResult.group(22));
                 }
                 if (location != null) {
                     resultList.add(location);
@@ -138,8 +141,12 @@ public class DataMapExpressionParser {
 
     public String replaceLocation(String expression, TableEntryLocation oldLocation, TableEntryLocation newLocation) {
         String returnedExpression = expression;
-        String tempPattern = StringHelper.replacePrms(language.getSubstPatternForReplaceLocation(), new Object[] {
-                oldLocation.tableName, oldLocation.columnName });
+        String oldTName = oldLocation.tableName;
+        if (oldTName.matches(GLOBALMAP_PATTERN)) {
+            oldTName = oldTName.replaceAll("\\(", "\\\\(").replaceAll("\\)", "\\\\)").replaceAll("\\\"", "\\\\\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+        }
+        String tempPattern = StringHelper.replacePrms(language.getSubstPatternForReplaceLocation(), new Object[] { oldTName,
+                oldLocation.columnName });
         recompilePatternIfNecessary(tempPattern);
         if (returnedExpression != null) {
             matcher.setMultiline(true);
@@ -151,6 +158,27 @@ public class DataMapExpressionParser {
             returnedExpression = Util.substitute(matcher, pattern, substitution, returnedExpression, Util.SUBSTITUTE_ALL);
         }
         return returnedExpression;
+    }
+
+    public Set<String> getGlobalMapSet(String sqlQuery) {
+        Set<String> resultList = new HashSet<String>();
+        if (sqlQuery != null) {
+            matcher.setMultiline(true);
+            if (patternMatcherInput == null) {
+                patternMatcherInput = new PatternMatcherInput(sqlQuery);
+            } else {
+                patternMatcherInput.setInput(sqlQuery);
+            }
+            recompilePatternIfNecessary(GLOBALMAP_PATTERN);
+            while (matcher.contains(patternMatcherInput, pattern)) {
+                MatchResult matchResult = matcher.getMatch();
+                if (matchResult.group(1) != null) {
+                    String matchGroup = matchResult.group(1);
+                    resultList.add(matchGroup);
+                }
+            }
+        }
+        return resultList;
     }
 
 }
