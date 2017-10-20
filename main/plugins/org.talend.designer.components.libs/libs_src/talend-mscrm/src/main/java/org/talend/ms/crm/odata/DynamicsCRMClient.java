@@ -76,6 +76,9 @@ import org.talend.ms.crm.odata.httpclientfactory.IHttpclientFactoryObservable;
 public class DynamicsCRMClient implements IHttpClientFactoryObserver {
 
     private static final String NAMESPAVE = "Microsoft.Dynamics.CRM";
+    private  static final String LOOKUP_NAME_PREFIX = "_";
+    private  static final String LOOKUP_NAME_SUFFIX = "_value";
+    private static final int LOOKUP_NAME_MINSIZE = LOOKUP_NAME_PREFIX.length()+LOOKUP_NAME_SUFFIX.length();
 
     private ClientConfiguration clientConfiguration;
 
@@ -341,8 +344,12 @@ public class DynamicsCRMClient implements IHttpClientFactoryObserver {
 
     }
 
-    public void addEntityNavigationLink(ClientEntity entity, String lookupEntitySet, String navigationLinkName,
+    public void addEntityNavigationLink(ClientEntity entity, String lookupEntitySet, String lookupName,
             String linkedEntityId, boolean emptyLookupIntoNull, boolean ignoreNull) {
+
+        // To help the final user since lookup names '_name_value' are available in the schema
+        // But it's the navigation link that can be updated.
+        String navigationLinkName = this.extractNavigationLinkName(lookupName);
 
         // If value is empty and emptyLookupIntoNull, then set the value to null to unlink the navigation (set to null)
         if(emptyLookupIntoNull && linkedEntityId != null && linkedEntityId.isEmpty()){
@@ -366,6 +373,35 @@ public class DynamicsCRMClient implements IHttpClientFactoryObserver {
             // Retains all navigation links to delete (set to null)
             navigationLinksToNull.add(navigationLinkName);
         }
+    }
+
+    /**
+     * Get the navigation link name from a lookup one.
+     * MSCRM auto-generates lookup properties from navigation links.
+     * The auto-generated lookup property name is _navigationLinkName_value.
+     * This method extract 'navigationLinkName' only if it begins by '_' and ends by '_value'.
+     *
+     * @param lookupName The auto-generated lookup name
+     * @return The extracted navigation link name or the lookup name if it can't be extracted.
+     */
+    public String extractNavigationLinkName(String lookupName){
+        final int nameSize = lookupName.length();
+        if(nameSize < LOOKUP_NAME_MINSIZE){
+            return lookupName;
+        }
+
+        String pref = lookupName.substring(0, LOOKUP_NAME_PREFIX.length());
+        if(!pref.equals(LOOKUP_NAME_PREFIX)){
+            return lookupName;
+        }
+
+        final int endName = nameSize - LOOKUP_NAME_SUFFIX.length();
+        String suff = lookupName.substring(endName, nameSize);
+        if(!suff.equals(LOOKUP_NAME_SUFFIX)){
+            return lookupName;
+        }
+
+        return lookupName.substring(LOOKUP_NAME_PREFIX.length(), endName);
     }
 
     /**
