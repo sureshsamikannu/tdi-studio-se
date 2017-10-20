@@ -18,6 +18,8 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import javax.naming.AuthenticationException;
@@ -93,6 +95,14 @@ public class DynamicsCRMClient implements IHttpClientFactoryObserver {
     private String entitySet;
 
     private String entityType;
+
+    /**
+     * A list which contains all navigation links to set to null.
+     *
+     * A distinct delete command must be sent to set a navigation property to null. It can't be done in the same
+     * time that the entity update.
+     */
+    private List<String> navigationLinksToNull = new ArrayList<String>();
 
     public DynamicsCRMClient(ClientConfiguration clientConfiguration, String serviceRootURL, String entitySet)
             throws AuthenticationException {
@@ -217,11 +227,12 @@ public class DynamicsCRMClient implements IHttpClientFactoryObserver {
     }
 
     /**
-     * Update entity with provided content
+     * Update entity with provided content.
+     * The PATCH method is used, so only given properties are updated.
+     * Navigation link properties that must be set to null are updated by another DELETE calls.
      * 
-     * @param entitySet entitySet the EntitySet name which you want to update records
-     * @param entity provide to update
-     * @param updateType UpdateType.REPLACE(Full updates) or UpdateType.PATCH(Partial updates )
+     * @param entity The payload containing properties to update
+     * @param keySegment The id of the entity to update
      * 
      * @throws ServiceUnavailableException
      */
@@ -229,7 +240,19 @@ public class DynamicsCRMClient implements IHttpClientFactoryObserver {
         URIBuilder updateURIBuilder = odataClient.newURIBuilder(serviceRootURL).appendEntitySetSegment(entitySet)
                 .appendKeySegment(UUID.fromString(keySegment));
         HttpEntity httpEntity = convertToHttpEntity(entity);
-        return createAndExecuteRequest(updateURIBuilder.build(), httpEntity, HttpMethod.PATCH);
+        HttpResponse updateHttpResponse =  createAndExecuteRequest(updateURIBuilder.build(), httpEntity, HttpMethod.PATCH);
+
+        // No need to test the updateHttpResponse code since it is returned only if it's a success.
+        // The deletion of navigation links will be done only if the previous update doesn't throw an exception.
+        this.deleteNavigationLinksToNull(keySegment);
+
+        return updateHttpResponse;
+    }
+
+    protected void deleteNavigationLinksToNull(String keySegment) throws ServiceUnavailableException {
+        for(String navigationLinkName : this.navigationLinksToNull){
+            this.deleteNavigationLink(navigationLinkName, keySegment);
+        }
     }
 
     /**
@@ -245,6 +268,25 @@ public class DynamicsCRMClient implements IHttpClientFactoryObserver {
                 .appendKeySegment(UUID.fromString(keySegment));
 
         return createAndExecuteRequest(deleteURIBuilder.build(), null, HttpMethod.DELETE);
+    }
+
+
+    /**
+     * Delete a navigation link from an entity (set the property to null).
+     * Jira : TDI-39571
+     *
+     * @param navigationLinkName The navigation link name (not the _name_value generated lookup property)
+     * @param keySegment The keysegment(id) of the main property
+     * @return The Http response.
+     * @throws ServiceUnavailableException
+     */
+    public HttpResponse deleteNavigationLink(String navigationLinkName, String keySegment) throws ServiceUnavailableException {
+        URIBuilder deleteNavLinkURIBuilder = odataClient.newURIBuilder(serviceRootURL)
+                                                    .appendEntitySetSegment(entitySet)
+                                                    .appendKeySegment(UUID.fromString(keySegment))
+                                                    .appendNavigationSegment(navigationLinkName).appendRefSegment();
+
+        return createAndExecuteRequest(deleteNavLinkURIBuilder.build(), null, HttpMethod.DELETE);
     }
 
     /**
@@ -299,17 +341,31 @@ public class DynamicsCRMClient implements IHttpClientFactoryObserver {
 
     }
 
-    public void addEntityNavigationLink(ClientEntity entity, String lookupEntitySet, String navigationName,
-            String linkedEntityId) {
+    public void addEntityNavigationLink(ClientEntity entity, String lookupEntitySet, String navigationLinkName,
+            String linkedEntityId, boolean emptyLookupIntoNull, boolean ignoreNull) {
+
+        // If value is empty and emptyLookupIntoNull, then set the value to null to unlink the navigation (set to null)
+        if(emptyLookupIntoNull && linkedEntityId != null && linkedEntityId.isEmpty()){
+            linkedEntityId = null;
+        }
+
+        // If ignore null is set and the value is null, then don't update/delete this navigation link
+        if(ignoreNull && linkedEntityId == null){
+            return;
+        }
+
         if (linkedEntityId != null) {
             try {
-                entity.getNavigationLinks().add(odataClient.getObjectFactory().newEntityNavigationLink(navigationName,
+                entity.getNavigationLinks().add(odataClient.getObjectFactory().newEntityNavigationLink(navigationLinkName,
                         new URI(lookupEntitySet + "(" + linkedEntityId + ")")));
             } catch (URISyntaxException e) {
                 throw new HttpClientException(e);
             }
         }
-
+        else{
+            // Retains all navigation links to delete (set to null)
+            navigationLinksToNull.add(navigationLinkName);
+        }
     }
 
     /**
