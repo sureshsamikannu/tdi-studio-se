@@ -37,9 +37,13 @@ import org.talend.components.api.properties.ComponentProperties;
 import org.talend.components.api.service.ComponentService;
 import org.talend.components.api.wizard.ComponentWizard;
 import org.talend.components.api.wizard.ComponentWizardDefinition;
+import org.talend.core.GlobalServiceRegister;
+import org.talend.core.ILibraryManagerService;
+import org.talend.core.model.general.ModuleNeeded;
 import org.talend.core.model.metadata.IMetadataTable;
 import org.talend.core.model.metadata.builder.connection.Connection;
 import org.talend.core.model.metadata.builder.connection.DatabaseConnection;
+import org.talend.core.model.param.EConnectionParameterName;
 import org.talend.core.model.process.EComponentCategory;
 import org.talend.core.model.process.Element;
 import org.talend.core.model.process.IElementParameter;
@@ -59,6 +63,7 @@ import org.talend.daikon.properties.PropertiesImpl;
 import org.talend.daikon.properties.presentation.Form;
 import org.talend.designer.core.generic.constants.IGenericConstants;
 import org.talend.designer.core.generic.model.GenericElementParameter;
+import org.talend.designer.core.generic.model.GenericTableUtils;
 import org.talend.designer.core.generic.utils.ComponentsUtils;
 import org.talend.designer.core.model.FakeElement;
 import org.talend.designer.core.model.components.ElementParameter;
@@ -70,7 +75,6 @@ import org.talend.repository.generic.ui.DynamicComposite;
 import org.talend.repository.generic.ui.context.ContextComposite;
 import org.talend.repository.generic.ui.context.handler.GenericContextHandler;
 import org.talend.repository.generic.update.GenericUpdateManager;
-import org.talend.repository.generic.util.GenericConnectionUtil;
 import org.talend.repository.generic.util.GenericWizardServiceFactory;
 import org.talend.repository.model.IProxyRepositoryFactory;
 
@@ -266,17 +270,17 @@ public class GenericDBService implements IGenericDBService{
                 // copy the value
                 String proName = ((org.talend.daikon.properties.property.Property) otherProp).getName();
                 Object value = ((org.talend.daikon.properties.property.Property) otherProp).getStoredValue();
-                if(proName.equals("jdbcUrl")){
+                if(proName.equals("jdbcUrl")){//$NON-NLS-1$
                     dbConnection.setURL((String)value);
-                }else if(proName.equals("driverClass")){
+                }else if(proName.equals("driverClass")){//$NON-NLS-1$
                     dbConnection.setDriverClass((String)value);
-                }else if(proName.equals("userId")){
+                }else if(proName.equals("userId")){//$NON-NLS-1$
                     dbConnection.setUsername((String)value);
-                }else if(proName.equals("password")){
+                }else if(proName.equals("password")){//$NON-NLS-1$
                     dbConnection.setPassword((String)value);
-                }else if(proName.equals("drivers") && GenericTypeUtils.isListStringType((org.talend.daikon.properties.property.Property)otherProp)){
+                }else if(proName.equals("drivers") && GenericTypeUtils.isListStringType((org.talend.daikon.properties.property.Property)otherProp)){//$NON-NLS-1$
                     List<String> listString = (List<String>) value;
-                    String jars = GenericConnectionUtil.getDriverJarPath(listString);
+                    String jars = GenericTableUtils.getDriverJarPaths(listString);
                     if(jars != null){
                         dbConnection.setDriverJarPath(jars);
                     }
@@ -284,5 +288,17 @@ public class GenericDBService implements IGenericDBService{
                 }
             }
         }
+    }
+
+    @Override
+    public String getMVNPath(IElementParameter tableParam, String value) {
+        if(tableParam.getName().equals(EConnectionParameterName.GENERIC_DRIVER_JAR.getDisplayName())){
+            ModuleNeeded module = new ModuleNeeded("", value, "", true);//$NON-NLS-1$ //$NON-NLS-2$
+            String mvnPath = module.getMavenUri(true);
+            if(mvnPath.endsWith("/jar")){//$NON-NLS-1$
+                return mvnPath.substring(0, mvnPath.lastIndexOf("/"));//$NON-NLS-1$
+            }
+        }
+        return value;
     }
 }

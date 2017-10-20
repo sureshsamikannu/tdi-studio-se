@@ -195,6 +195,11 @@
              name="widget.type.guessSchema"
              widgetType="widget.type.guessSchema">
        </Mapping>
+       <Mapping
+             mapFieldType="MODULE_LIST"
+             name="widget.type.moduleList"
+             widgetType="widget.type.moduleList">
+       </Mapping>
    </extension>
    <extension
          point="org.talend.designer.core.generators">

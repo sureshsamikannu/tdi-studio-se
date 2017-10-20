@@ -32,6 +32,7 @@ import org.talend.core.model.metadata.MetadataToolHelper;
 import org.talend.core.model.metadata.builder.connection.Connection;
 import org.talend.core.model.metadata.builder.connection.DatabaseConnection;
 import org.talend.core.model.metadata.builder.connection.MetadataTable;
+import org.talend.core.model.param.EConnectionParameterName;
 import org.talend.core.model.process.IElement;
 import org.talend.core.model.process.IElementParameter;
 import org.talend.core.model.process.INode;
@@ -221,7 +222,7 @@ public class GenericDragAndDropHandler extends AbstractDragAndDropServiceHandler
     
     @Override
     public boolean isGenericPropertiesValue(String paramName){
-        if(IGenericConstants.driverTable.equals(paramName)){
+        if(EConnectionParameterName.GENERIC_DRIVER_JAR.getDisplayName().equals(paramName)){
             return true;
         }
         return false;

@@ -17,9 +17,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.talend.core.GlobalServiceRegister;
+import org.talend.core.model.param.EConnectionParameterName;
 import org.talend.core.model.process.EParameterFieldType;
 import org.talend.core.model.process.ElementParameterParser;
 import org.talend.core.model.process.IElementParameter;
+import org.talend.core.runtime.services.IGenericDBService;
 import org.talend.daikon.properties.Properties;
 import org.talend.daikon.properties.property.Property;
 
@@ -31,6 +34,11 @@ public class GenericTableUtils {
 
     public static void setTableValues(Properties tableProperties, List<Map<String, Object>> value, IElementParameter param) {
         List<Map<String, String>> table = ElementParameterParser.createTableValues(value, param);
+        IGenericDBService dbService = null;
+        if (GlobalServiceRegister.getDefault().isServiceRegistered(IGenericDBService.class)) {
+            dbService = (IGenericDBService) GlobalServiceRegister.getDefault().getService(
+                    IGenericDBService.class);
+        }
         for (String column : param.getListItemsDisplayCodeName()) {
             Property property = tableProperties.getValuedProperty(column);
             if (property.getValue() instanceof List) {
@@ -47,6 +55,14 @@ public class GenericTableUtils {
                     values = (List) property.getValue();
                 }
                 values.add(line.get(column));
+                List<String> valueList = new ArrayList<>();
+                if(dbService != null){
+                    for(String v:values){
+                        v = dbService.getMVNPath(param, v);
+                        valueList.add(v);
+                    }
+                    property.setValue(valueList);
+                }
             }
         }
     }
@@ -80,7 +96,11 @@ public class GenericTableUtils {
                                 line.put(columnName, Boolean.FALSE);
                             }
                         } else {
-                            line.put(columnName, values.get(i));
+                            if(param.getName().equals(EConnectionParameterName.GENERIC_DRIVER_JAR.getDisplayName())){
+                                line.put(columnName, getDriverJarPath((String)values.get(i)));
+                            }else{
+                                line.put(columnName, values.get(i));
+                            }
                         }
                     } else {
                         if (type.equals(EParameterFieldType.CHECK)) {
@@ -114,5 +134,28 @@ public class GenericTableUtils {
             }
         }
         return EParameterFieldType.TEXT;
+    }
+    
+    public static String getDriverJarPaths(List<String> listString){
+        StringBuffer jars = null;
+        for(String str : listString){
+            if(jars == null){
+                jars = new StringBuffer();
+            }else{
+                jars.append(";");
+            }
+            jars.append(getDriverJarPath(str));
+        }
+        if(jars == null){
+            return null;
+        }
+        return jars.toString();
+    }
+    
+    public static String getDriverJarPath(String mvnPath){
+        if(mvnPath.contains("/")){
+            mvnPath = mvnPath.split("/")[1]+".jar";
+        }
+        return mvnPath;
     }
 }

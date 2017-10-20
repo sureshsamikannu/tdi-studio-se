@@ -123,32 +123,5 @@ public class GenericConnectionUtil {
                 .getComponentWizardsForProperties(componentProperties, gitem.getProperty().getId());
         return wizards;
     }
-    
-    public static String getDriverJarPath(List<String> listString){
-        StringBuffer jars = null;
-        for(String str : listString){
-            if(str.contains("/")){
-                if(jars == null){
-                    jars = new StringBuffer();
-                    jars.append(str.split("/")[1]+".jar");
-                }else{
-                    jars.append(";");
-                    jars.append(str.split("/")[1]+".jar");
-                }
-            }else{
-                if(jars == null){
-                    jars = new StringBuffer();
-                    jars.append(str);
-                }else{
-                    jars.append(";");
-                    jars.append(str);
-                } 
-            }
-        }
-        if(jars == null){
-            return null;
-        }
-        return jars.toString();
-    }
 
 }
