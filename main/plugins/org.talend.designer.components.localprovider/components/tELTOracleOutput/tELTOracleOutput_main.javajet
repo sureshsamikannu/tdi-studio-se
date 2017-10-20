@@ -101,6 +101,23 @@ if(useExistingConn) {
     <%
 	log4jCodeGenerateUtil.useExistConnection(node);
 } else {
+   boolean useSSL = false;
+   if(previousNode != null) {
+	   useSSL = ("true").equals(ElementParameterParser.getValue(previousNode,"__USE_SSL__"));
+	   if("ORACLE_RAC".equals(connectionType) && useSSL){
+	       String walletType = ElementParameterParser.getValue(previousNode,"__WALLET_TYPE__");
+	       if("PKCS12".equals(walletType)){
+	       %>
+	           java.security.Security.insertProviderAt(new oracle.security.pki.OraclePKIProvider(), 3);
+	       <%
+	       }
+	       if("SSO".equals(walletType)){
+	       %>
+	           java.security.Security.addProvider(new oracle.security.pki.OraclePKIProvider());
+	       <%
+	       }
+	   }
+	 }
     %>
     String driverClass_<%=cid%> = "oracle.jdbc.driver.OracleDriver";
     java.lang.Class.forName(driverClass_<%=cid%>);
@@ -140,8 +157,21 @@ if(useExistingConn) {
 	} else {
 %>
 	java.util.Properties atnParamsPrope_<%=cid%> = new java.util.Properties();
-	atnParamsPrope_<%=cid%>.put("user",dbUser_<%=cid%>);
-	atnParamsPrope_<%=cid%>.put("password",dbPwd_<%=cid%>);
+   <%
+	if("ORACLE_RAC".equals(connectionType) && useSSL){
+   %>
+    	if(dbUser_<%=cid%>!=null && dbPwd_<%=cid%>!=null && !"".equals(dbUser_<%=cid%>)&& !"".equals(dbPwd_<%=cid%>)){
+        	atnParamsPrope_<%=cid%>.put("user",dbUser_<%=cid%>);
+        	atnParamsPrope_<%=cid%>.put("password",dbPwd_<%=cid%>);
+		}
+   <%
+	}else{
+   %>
+    	atnParamsPrope_<%=cid%>.put("user",dbUser_<%=cid%>);
+    	atnParamsPrope_<%=cid%>.put("password",dbPwd_<%=cid%>);
+   <%
+	}
+   %>
     if(<%= dbproperties %> != null && !"\"\"".equals(<%= dbproperties %>) && !"".equals(<%= dbproperties %>)){
         atnParamsPrope_<%=cid%>.load(new java.io.ByteArrayInputStream(<%=dbproperties%>.replace("&", "\n").getBytes()));
     }
