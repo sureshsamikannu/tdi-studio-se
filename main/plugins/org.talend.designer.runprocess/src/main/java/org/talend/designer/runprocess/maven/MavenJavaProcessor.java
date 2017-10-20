@@ -292,10 +292,10 @@ public class MavenJavaProcessor extends JavaProcessor {
         final ITalendProcessJavaProject talendJavaProject = getTalendJavaProject();
         // compile with JDT first in order to make the maven packaging work with a JRE.
         String goal = getGoals();
-        boolean isGoalPackage = TalendMavenConstants.GOAL_PACKAGE.equals(goal);
+        boolean isGoalInstall = TalendMavenConstants.GOAL_INSTALL.equals(goal);
         IFile jobJarFile = null;
         if (!TalendMavenConstants.GOAL_COMPILE.equals(goal)) {
-            if (isGoalPackage) {
+            if (isGoalInstall) {
                 String jobJarName = JavaResourcesHelper.getJobJarName(property.getLabel(), property.getVersion())
                         + FileExtensions.JAR_FILE_SUFFIX;
                 jobJarFile = talendJavaProject.getTargetFolder().getFile(jobJarName);
@@ -309,12 +309,12 @@ public class MavenJavaProcessor extends JavaProcessor {
 
         final Map<String, Object> argumentsMap = new HashMap<>();
         argumentsMap.put(TalendProcessArgumentConstant.ARG_GOAL, goal);
-        if (isGoalPackage) {
-            argumentsMap.put(TalendProcessArgumentConstant.ARG_PROGRAM_ARGUMENTS, "-Dmaven.main.skip=true -P !" //$NON-NLS-1$
+        if (isGoalInstall) {
+            argumentsMap.put(TalendProcessArgumentConstant.ARG_PROGRAM_ARGUMENTS, "-Dmaven.main.skip=true -Dmaven.test.skip=true  -P !" //$NON-NLS-1$
                     + TalendMavenConstants.PROFILE_PACKAGING_AND_ASSEMBLY);
         }
         talendJavaProject.buildModules(monitor, null, argumentsMap);
-        if (isGoalPackage) {
+        if (isGoalInstall) {
             if (jobJarFile != null) {
                 jobJarFile.refreshLocal(IResource.DEPTH_ONE, null);
             }
@@ -334,8 +334,8 @@ public class MavenJavaProcessor extends JavaProcessor {
         boolean requirePackaging = requirePackaging();
         if (!isExportConfig()) {
             if (requirePackaging) {
-                // We return the PACKAGE goal if the main job and/or one of its recursive job is a Big Data job.
-                return TalendMavenConstants.GOAL_PACKAGE;
+                // We return the INSTALL goal if the main job and/or one of its recursive job is a Big Data job.
+                return TalendMavenConstants.GOAL_INSTALL;
             }
         }
         if (isExportConfig()) {
