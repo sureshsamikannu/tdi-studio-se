@@ -176,7 +176,7 @@ public class JavaCompilationParticipant extends CompilationParticipant {
             return false;
         }
         try {
-            return project.getProject().hasNature(TalendJobNature.ID);
+            return project.getProject().exists() && project.getProject().hasNature(TalendJobNature.ID);
         } catch (CoreException e) {
             ExceptionHandler.process(e);
         }
