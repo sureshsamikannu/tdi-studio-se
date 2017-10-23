@@ -344,6 +344,15 @@ public class DynamicsCRMClient implements IHttpClientFactoryObserver {
 
     }
 
+    /**
+     * This setter has been added for unit tests to avoid some http requests.
+     *
+     * @param entityType
+     */
+    public void setEntityType(String entityType){
+        this.entityType = entityType;
+    }
+
     public void addEntityNavigationLink(ClientEntity entity, String lookupEntitySet, String lookupName,
             String linkedEntityId, boolean emptyLookupIntoNull, boolean ignoreNull) {
 
@@ -375,6 +384,10 @@ public class DynamicsCRMClient implements IHttpClientFactoryObserver {
         }
     }
 
+    public int getNbNavigationLinkToRemove(){
+        return navigationLinksToNull.size();
+    }
+
     /**
      * Get the navigation link name from a lookup one.
      * MSCRM auto-generates lookup properties from navigation links.
@@ -386,7 +399,7 @@ public class DynamicsCRMClient implements IHttpClientFactoryObserver {
      */
     public String extractNavigationLinkName(String lookupName){
         final int nameSize = lookupName.length();
-        if(nameSize < LOOKUP_NAME_MINSIZE){
+        if(nameSize <= LOOKUP_NAME_MINSIZE){
             return lookupName;
         }
 
