@@ -46,6 +46,7 @@ import org.talend.core.model.utils.IComponentName;
 import org.talend.core.repository.RepositoryComponentSetting;
 import org.talend.core.repository.model.repositoryObject.MetadataColumnRepositoryObject;
 import org.talend.core.repository.model.repositoryObject.MetadataTableRepositoryObject;
+import org.talend.core.runtime.services.IGenericDBService;
 import org.talend.core.runtime.services.IGenericWizardService;
 import org.talend.core.runtime.util.GenericTypeUtils;
 import org.talend.core.utils.TalendQuoteUtils;
@@ -242,12 +243,36 @@ public class GenericDragAndDropHandler extends AbstractDragAndDropServiceHandler
         Collection<IComponent> components = service.getComponentsFactory().readComponents();
         for (IComponent component : components) {
             if (EComponentType.GENERIC.equals(component.getComponentType())) {
+                if(isExtraTypeMetadata(seletetedNode, type)){
+                    seletetedNode = seletetedNode.getParent().getParent();
+                }
                 if (!neededComponents.contains(component) && isValid(seletetedNode, component)) {
                     neededComponents.add(component);
                 }
             }
         }
         return neededComponents;
+    }
+    
+    private boolean isExtraTypeMetadata(RepositoryNode seletetedNode, ERepositoryObjectType type){
+        if(type == ERepositoryObjectType.METADATA_CON_TABLE || type == ERepositoryObjectType.METADATA_CON_VIEW){
+            if(seletetedNode.getParent().getParent() == null){
+                return false;
+            }
+            RepositoryNode parent = seletetedNode.getParent().getParent();
+            if(parent.getObjectType() == null){
+                return false;
+            }
+            IGenericDBService dbService = null;
+            if (GlobalServiceRegister.getDefault().isServiceRegistered(IGenericDBService.class)) {
+                dbService = (IGenericDBService) GlobalServiceRegister.getDefault().getService(
+                        IGenericDBService.class);
+            }
+            if(dbService != null && dbService.getExtraTypes().contains(parent.getObjectType())){
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isValid(RepositoryNode seletetedNode, IComponent component) {
