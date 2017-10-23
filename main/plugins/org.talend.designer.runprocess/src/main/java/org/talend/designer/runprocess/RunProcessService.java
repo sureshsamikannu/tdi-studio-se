@@ -421,4 +421,9 @@ public class RunProcessService implements IRunProcessService {
         return delegateService.isExportConfig();
     }
 
+    @Override
+    public void buildCodesJavaProject() {
+        delegateService.buildCodesJavaProject();
+    }
+
 }

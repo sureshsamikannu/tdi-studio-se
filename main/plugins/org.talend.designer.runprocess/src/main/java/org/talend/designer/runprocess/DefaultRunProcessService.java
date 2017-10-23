@@ -49,6 +49,7 @@ import org.talend.core.model.general.TalendJobNature;
 import org.talend.core.model.process.IContext;
 import org.talend.core.model.process.IProcess;
 import org.talend.core.model.process.IProcess2;
+import org.talend.core.model.process.ProcessUtils;
 import org.talend.core.model.properties.Property;
 import org.talend.core.model.repository.ERepositoryObjectType;
 import org.talend.core.model.runprocess.data.PerformanceData;
@@ -58,6 +59,7 @@ import org.talend.core.runtime.process.ITalendProcessJavaProject;
 import org.talend.core.runtime.projectsetting.ProjectPreferenceManager;
 import org.talend.core.service.IESBMicroService;
 import org.talend.core.ui.ITestContainerProviderService;
+import org.talend.designer.maven.tools.MavenPomSynchronizer;
 import org.talend.designer.maven.tools.ProjectPomManager;
 import org.talend.designer.runprocess.i18n.Messages;
 import org.talend.designer.runprocess.java.JavaProcessorUtilities;
@@ -626,6 +628,24 @@ public class DefaultRunProcessService implements IRunProcessService {
     @Override
     public boolean isExportConfig() {
         return ProcessorUtilities.isExportConfig();
+    }
+
+    @Override
+    public void buildCodesJavaProject() {
+        try {
+            MavenPomSynchronizer.buildAndInstallCodesProject(getTalendCodeJavaProject(ERepositoryObjectType.ROUTINES),
+                    isExportConfig());
+            if (ProcessUtils.isRequiredPigUDFs(null)) {
+                MavenPomSynchronizer.buildAndInstallCodesProject(getTalendCodeJavaProject(ERepositoryObjectType.PIG_UDF),
+                        isExportConfig());
+            }
+            if (ProcessUtils.isRequiredBeans(null)) {
+                MavenPomSynchronizer.buildAndInstallCodesProject(getTalendCodeJavaProject(ERepositoryObjectType.valueOf("BEANS")), //$NON-NLS-1$
+                        isExportConfig());
+            }
+        } catch (Exception e) {
+            ExceptionHandler.process(e);
+        }
     }
 
 }
