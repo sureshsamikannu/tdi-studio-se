@@ -57,6 +57,7 @@ import org.talend.core.model.repository.IRepositoryViewObject;
 import org.talend.core.runtime.services.IGenericDBService;
 import org.talend.core.runtime.util.GenericTypeUtils;
 import org.talend.core.ui.check.IChecker;
+import org.talend.core.utils.TalendQuoteUtils;
 import org.talend.daikon.NamedThing;
 import org.talend.daikon.properties.Properties;
 import org.talend.daikon.properties.PropertiesImpl;
@@ -296,7 +297,8 @@ public class GenericDBService implements IGenericDBService{
             ModuleNeeded module = new ModuleNeeded("", value, "", true);//$NON-NLS-1$ //$NON-NLS-2$
             String mvnPath = module.getMavenUri(true);
             if(mvnPath.endsWith("/jar")){//$NON-NLS-1$
-                return mvnPath.substring(0, mvnPath.lastIndexOf("/"));//$NON-NLS-1$
+                mvnPath = mvnPath.substring(0, mvnPath.lastIndexOf("/"));//$NON-NLS-1$
+                return TalendQuoteUtils.addQuotesIfNotExist(mvnPath);
             }
         }
         return value;
