@@ -32,7 +32,6 @@ import org.talend.designer.dbmap.language.AbstractDbLanguage;
 import org.talend.designer.dbmap.language.IJoinType;
 import org.talend.designer.dbmap.language.generation.DbGenerationManager;
 import org.talend.designer.dbmap.language.generation.DbMapSqlConstants;
-import org.talend.designer.dbmap.managers.MapperManager;
 import org.talend.designer.dbmap.model.tableentry.TableEntryLocation;
 import org.talend.designer.dbmap.utils.DataMapExpressionParser;
 
@@ -139,34 +138,27 @@ public class OracleGenerationManager extends DbGenerationManager {
                     }
                     if (expression != null && expression.trim().length() > 0) {
                         appendSqlQuery(sb, expression);
-                        if (component.getMapperMain() == null) {
-                            component.getExternalEmfData();
-                        }
-                        if (component.getMapperMain() != null) {
-                            MapperManager mapperManager = component.getMapperMain().getMapperManager();
-                            DataMapExpressionParser dataMapExpressionParser = new DataMapExpressionParser(
-                                    mapperManager.getCurrentLanguage());
-                            TableEntryLocation[] tableEntriesLocationsSources = dataMapExpressionParser
-                                    .parseTableEntryLocations(expression);
-                            boolean columnChanged = false;
-                            if (tableEntriesLocationsSources.length > 1) {
-                                columnChanged = true;
-                            } else {
-                                for (TableEntryLocation tableEntriesLocationsSource : tableEntriesLocationsSources) {
-                                    TableEntryLocation location = tableEntriesLocationsSource;
-                                    String entryName = getAliasOf(dbMapEntry.getName());
-                                    if (location != null && entryName != null
-                                            && !entryName.startsWith("_") && !entryName.equals(location.columnName)) {//$NON-NLS-1$
-                                        columnChanged = true;
+                        DataMapExpressionParser dataMapExpressionParser = new DataMapExpressionParser(language);
+                        TableEntryLocation[] tableEntriesLocationsSources = dataMapExpressionParser
+                                .parseTableEntryLocations(expression);
+                        boolean columnChanged = false;
+                        if (tableEntriesLocationsSources.length > 1) {
+                            columnChanged = true;
+                        } else {
+                            for (TableEntryLocation tableEntriesLocationsSource : tableEntriesLocationsSources) {
+                                TableEntryLocation location = tableEntriesLocationsSource;
+                                String entryName = getAliasOf(dbMapEntry.getName());
+                                if (location != null && entryName != null
+                                        && !entryName.startsWith("_") && !entryName.equals(location.columnName)) {//$NON-NLS-1$
+                                    columnChanged = true;
 
-                                    }
                                 }
                             }
-                            if (!added && columnChanged) {
-                                String name = DbMapSqlConstants.SPACE + DbMapSqlConstants.AS + DbMapSqlConstants.SPACE
-                                        + getAliasOf(dbMapEntry.getName());
-                                appendSqlQuery(sb, name);
-                            }
+                        }
+                        if (!added && columnChanged) {
+                            String name = DbMapSqlConstants.SPACE + DbMapSqlConstants.AS + DbMapSqlConstants.SPACE
+                                    + getAliasOf(dbMapEntry.getName());
+                            appendSqlQuery(sb, name);
                         }
                         queryColumnsName += expression;
                         queryColumnsSegments.add(columnSegment);
