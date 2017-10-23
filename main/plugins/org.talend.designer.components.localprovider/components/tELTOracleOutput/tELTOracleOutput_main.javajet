@@ -103,19 +103,22 @@ if(useExistingConn) {
 } else {
    boolean useSSL = false;
    if(previousNode != null) {
-	   useSSL = ("true").equals(ElementParameterParser.getValue(previousNode,"__USE_SSL__"));
-	   if("ORACLE_RAC".equals(connectionType) && useSSL){
-	       String walletType = ElementParameterParser.getValue(previousNode,"__WALLET_TYPE__");
-	       if("PKCS12".equals(walletType)){
-	       %>
-	           java.security.Security.insertProviderAt(new oracle.security.pki.OraclePKIProvider(), 3);
-	       <%
-	       }
-	       if("SSO".equals(walletType)){
-	       %>
-	           java.security.Security.addProvider(new oracle.security.pki.OraclePKIProvider());
-	       <%
-	       }
+       String dbVersion =  ElementParameterParser.getValue(previousNode, "__DB_VERSION__");
+	   if("ORACLE_11".equals(dbVersion) || "ORACLE_11-6".equals(dbVersion) || "ORACLE_12".equals(dbVersion)){
+	      useSSL = "true".equals(ElementParameterParser.getValue(previousNode,"__USE_SSL__"));
+		   if("ORACLE_RAC".equals(connectionType) && useSSL){
+		       String walletType = ElementParameterParser.getValue(previousNode,"__WALLET_TYPE__");
+		       if("PKCS12".equals(walletType)){
+		       %>
+		           java.security.Security.insertProviderAt(new oracle.security.pki.OraclePKIProvider(), 3);
+		       <%
+		       }
+		       if("SSO".equals(walletType)){
+		       %>
+		           java.security.Security.addProvider(new oracle.security.pki.OraclePKIProvider());
+		       <%
+		       }
+	      }
 	   }
 	 }
     %>

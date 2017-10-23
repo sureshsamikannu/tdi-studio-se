@@ -100,7 +100,10 @@ if(inputSchema != null && inputSchema.size() > 0 && outputSchema != null && outp
         java.sql.Connection connection_<%=cid%> = (java.sql.Connection) globalMap.get("<%=connectionName%>");
         <%
     } else {
-        boolean useSSL = ("true").equals(ElementParameterParser.getValue(node,"__USE_SSL__"));
+        boolean useSSL = false;
+		  if("ORACLE_11".equals(dbVersion) || "ORACLE_11-6".equals(dbVersion) || "ORACLE_12".equals(dbVersion) ){
+            useSSL = "true".equals(ElementParameterParser.getValue(node,"__USE_SSL__"));
+        }
         String connectionType = ElementParameterParser.getValue(node, "__CONNECTION_TYPE__");
         if("ORACLE_RAC".equals(connectionType) && useSSL){
             String walletType = ElementParameterParser.getValue(node,"__WALLET_TYPE__");

@@ -130,7 +130,10 @@ if(useExistingConnection) {
     log4jCodeGenerateUtil.useExistConnection(node);
 } else {
     String connectionType = ElementParameterParser.getValue(node, "__CONNECTION_TYPE__");
-    boolean useSSL = ("true").equals(ElementParameterParser.getValue(node,"__USE_SSL__"));
+    boolean useSSL = false;
+    if("ORACLE_11".equals(dbVersion) || "ORACLE_11-6".equals(dbVersion) || "ORACLE_12".equals(dbVersion) ){
+        useSSL = "true".equals(ElementParameterParser.getValue(node,"__USE_SSL__"));
+    }
     if("ORACLE_RAC".equals(connectionType) && useSSL){
         String walletType = ElementParameterParser.getValue(node,"__WALLET_TYPE__");
         if("PKCS12".equals(walletType)){

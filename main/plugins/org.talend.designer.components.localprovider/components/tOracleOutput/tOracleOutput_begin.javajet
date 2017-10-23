@@ -223,8 +223,10 @@ skeleton="../templates/db_output_bulk.skeleton"
     		} else {
         <%
         }
-          boolean useSSL = ("true").equals(ElementParameterParser.getValue(node,"__USE_SSL__"));
-          String connectionType = ElementParameterParser.getValue(node, "__CONNECTION_TYPE__");
+        boolean useSSL = false;
+        String connectionType = ElementParameterParser.getValue(node, "__CONNECTION_TYPE__");
+		if("ORACLE_11".equals(dbVersion) || "ORACLE_11-6".equals(dbVersion) || "ORACLE_12".equals(dbVersion) ){
+          useSSL = "true".equals(ElementParameterParser.getValue(node,"__USE_SSL__"));
           if("ORACLE_RAC".equals(connectionType) && useSSL){
               String walletType = ElementParameterParser.getValue(node,"__WALLET_TYPE__");
               if("PKCS12".equals(walletType)){
@@ -237,7 +239,8 @@ skeleton="../templates/db_output_bulk.skeleton"
                   java.security.Security.addProvider(new oracle.security.pki.OraclePKIProvider());
               <%
               }
-          }
+           }
+         }
         %>
         
                 <%if("ORACLE_11".equals(dbVersion) || "ORACLE_11-6".equals(dbVersion) || "ORACLE_12".equals(dbVersion)){%>
