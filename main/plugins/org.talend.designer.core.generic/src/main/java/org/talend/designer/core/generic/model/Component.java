@@ -731,7 +731,7 @@ public class Component extends AbstractBasicComponent {
         // These parameters is only work when TIS is loaded
         // GLiu Added for Task http://jira.talendforge.org/browse/TESB-4279
         if (PluginChecker.isTeamEdition() && !ComponentCategory.CATEGORY_4_CAMEL.getName().equals(getPaletteType())) {
-            boolean defaultParalelize = componentDefinition.isParallelize();
+            boolean defaultParalelize = Boolean.FALSE;
             param = new ElementParameter(node);
             param.setReadOnly(!defaultParalelize);
             param.setName(EParameterName.PARALLELIZE.getName());
@@ -1181,7 +1181,7 @@ public class Component extends AbstractBasicComponent {
     
     @Override
     public boolean canParallelize() {
-        return componentDefinition.isParallelize();
+        return false;
     }
 
     /*
