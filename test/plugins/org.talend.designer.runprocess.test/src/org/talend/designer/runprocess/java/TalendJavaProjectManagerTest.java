@@ -28,6 +28,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.talend.commons.utils.VersionUtils;
+import org.talend.core.PluginChecker;
 import org.talend.core.model.general.Project;
 import org.talend.core.model.general.TalendJobNature;
 import org.talend.core.model.properties.ProcessItem;
@@ -94,6 +95,31 @@ public class TalendJavaProjectManagerTest {
         assertTrue(processFolder.exists());
         IFile processPom = processFolder.getFile(TalendMavenConstants.POM_FILE_NAME);
         assertTrue(processPom.exists());
+        
+        if (PluginChecker.isMapReducePluginLoader()) {
+            IFolder processMRFolder = jobsFolder.getFolder(TalendJavaProjectConstants.DIR_PROCESS_MR);
+            assertTrue(processMRFolder.exists());
+            IFile processMRPom = processFolder.getFile(TalendMavenConstants.POM_FILE_NAME);
+            assertTrue(processMRPom.exists());
+        }
+        if (PluginChecker.isStormPluginLoader()) {
+            IFolder processStormFolder = jobsFolder.getFolder(TalendJavaProjectConstants.DIR_PROCESS_STORM);
+            assertTrue(processStormFolder.exists());
+            IFile processStormPom = processFolder.getFile(TalendMavenConstants.POM_FILE_NAME);
+            assertTrue(processStormPom.exists());
+        }
+        if (PluginChecker.isRouteLoaded()) {
+            IFolder processRouteFolder = jobsFolder.getFolder(TalendJavaProjectConstants.DIR_PROCESS_ROUTES);
+            assertTrue(processRouteFolder.exists());
+            IFile processRoutePom = processFolder.getFile(TalendMavenConstants.POM_FILE_NAME);
+            assertTrue(processRoutePom.exists());
+        }
+        if (PluginChecker.isServiceLoaded()) {
+            IFolder processServiceFolder = jobsFolder.getFolder(TalendJavaProjectConstants.DIR_PROCESS_SERVICES);
+            assertTrue(processServiceFolder.exists());
+            IFile processServicePom = processFolder.getFile(TalendMavenConstants.POM_FILE_NAME);
+            assertTrue(processServicePom.exists());
+        }
     }
 
     @Test

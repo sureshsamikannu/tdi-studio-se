@@ -37,6 +37,7 @@ import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.ui.runtime.CommonUIPlugin;
 import org.talend.commons.utils.generation.JavaUtils;
 import org.talend.core.GlobalServiceRegister;
+import org.talend.core.PluginChecker;
 import org.talend.core.model.general.Project;
 import org.talend.core.model.process.ProcessUtils;
 import org.talend.core.model.properties.JobletProcessItem;
@@ -94,16 +95,27 @@ public class TalendJavaProjectManager {
             // process
             IFolder process = createFolderIfNotExist(jobs.getFolder(DIR_PROCESS), monitor);
             // process_mr
-            IFolder process_mr = createFolderIfNotExist(jobs.getFolder(DIR_PROCESS_MR), monitor);
+            IFolder process_mr = null;
+            if (PluginChecker.isMapReducePluginLoader()) {
+                process_mr = createFolderIfNotExist(jobs.getFolder(DIR_PROCESS_MR), monitor);
+            }
             // process_storm
-            IFolder process_storm = createFolderIfNotExist(jobs.getFolder(DIR_PROCESS_STORM), monitor);
+            IFolder process_storm = null;
+            if (PluginChecker.isStormPluginLoader()) {
+                process_storm = createFolderIfNotExist(jobs.getFolder(DIR_PROCESS_STORM), monitor);
+            }
             // routes
-            IFolder routes = createFolderIfNotExist(jobs.getFolder(DIR_PROCESS_ROUTES), monitor);
+            IFolder routes = null;
+            if (PluginChecker.isRouteLoaded()) {
+                routes = createFolderIfNotExist(jobs.getFolder(DIR_PROCESS_ROUTES), monitor);
+            }
             // services
-            IFolder services = createFolderIfNotExist(jobs.getFolder(DIR_PROCESS_SERVICES), monitor);
+            IFolder services = null;
+            if (PluginChecker.isServiceLoaded()) {
+                services = createFolderIfNotExist(jobs.getFolder(DIR_PROCESS_SERVICES), monitor);
+            }
 
             // create aggregator poms
-
             String jobGroupId = PomIdsHelper.getJobGroupId(project.getTechnicalLabel());
             manager.createAggregatorFolderPom(process, DIR_PROCESS, jobGroupId, monitor);
             manager.createAggregatorFolderPom(process_mr, DIR_PROCESS_MR, jobGroupId, monitor);
