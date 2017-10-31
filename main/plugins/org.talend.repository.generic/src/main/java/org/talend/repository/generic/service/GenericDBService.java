@@ -295,7 +295,7 @@ public class GenericDBService implements IGenericDBService{
     public String getMVNPath(IElementParameter tableParam, String value) {
         if(tableParam.getName().equals(EConnectionParameterName.GENERIC_DRIVER_JAR.getDisplayName())){
             ModuleNeeded module = new ModuleNeeded("", value, "", true);//$NON-NLS-1$ //$NON-NLS-2$
-            String mvnPath = module.getMavenUri(true);
+            String mvnPath = module.getMavenUri();
             if(mvnPath.endsWith("/jar")){//$NON-NLS-1$
                 mvnPath = mvnPath.substring(0, mvnPath.lastIndexOf("/"));//$NON-NLS-1$
                 return TalendQuoteUtils.addQuotesIfNotExist(mvnPath);
