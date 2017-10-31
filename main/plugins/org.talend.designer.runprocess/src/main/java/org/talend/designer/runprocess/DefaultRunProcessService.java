@@ -39,7 +39,9 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.osgi.framework.Bundle;
 import org.talend.commons.exception.ExceptionHandler;
+import org.talend.core.CorePlugin;
 import org.talend.core.GlobalServiceRegister;
+import org.talend.core.ILibraryManagerService;
 import org.talend.core.language.ECodeLanguage;
 import org.talend.core.language.ICodeProblemsChecker;
 import org.talend.core.model.components.ComponentCategory;
@@ -51,6 +53,7 @@ import org.talend.core.model.process.IProcess;
 import org.talend.core.model.process.IProcess2;
 import org.talend.core.model.process.ProcessUtils;
 import org.talend.core.model.properties.Property;
+import org.talend.core.model.properties.RoutineItem;
 import org.talend.core.model.repository.ERepositoryObjectType;
 import org.talend.core.model.runprocess.data.PerformanceData;
 import org.talend.core.repository.model.ProxyRepositoryFactory;
@@ -71,6 +74,7 @@ import org.talend.designer.runprocess.prefs.RunProcessPrefsConstants;
 import org.talend.designer.runprocess.spark.SparkJavaProcessor;
 import org.talend.designer.runprocess.storm.StormJavaProcessor;
 import org.talend.designer.runprocess.ui.views.ProcessView;
+import org.talend.librariesmanager.model.ModulesNeededProvider;
 import org.talend.repository.RepositoryWorkUnit;
 import org.talend.repository.constants.Log4jPrefsConstants;
 import org.talend.repository.ui.utils.Log4jPrefsSettingManager;
@@ -286,6 +290,25 @@ public class DefaultRunProcessService implements IRunProcessService {
     /*
      * (non-Javadoc)
      * 
+     * @see
+     * org.talend.designer.runprocess.IRunProcessService#updateLibraries(org.talend.core.model.properties.RoutineItem)
+     */
+    @Override
+    public void updateLibraries(RoutineItem routineItem) {
+        Set<ModuleNeeded> modulesForRoutine = ModulesNeededProvider.updateModulesNeededForRoutine(routineItem);
+        File libDir = getJavaProjectLibFolder().getLocation().toFile();
+        if (libDir == null) {
+            return;
+        }
+        ILibraryManagerService repositoryBundleService = CorePlugin.getDefault().getRepositoryBundleService();
+        repositoryBundleService.retrieve(modulesForRoutine, libDir.getAbsolutePath(), true);
+        repositoryBundleService.installModules(modulesForRoutine, null);
+        CorePlugin.getDefault().getLibrariesService().checkLibraries();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.talend.designer.runprocess.IRunProcessService#updateLibraries(java.util.Set,
      * org.talend.core.model.process.IProcess, java.util.Set)
      */
@@ -310,6 +333,7 @@ public class DefaultRunProcessService implements IRunProcessService {
             view.refresh(true);
         }
     }
+
     /*
      * (non-Javadoc)
      * 
