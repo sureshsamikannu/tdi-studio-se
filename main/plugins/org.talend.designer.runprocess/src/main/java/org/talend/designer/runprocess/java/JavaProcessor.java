@@ -1348,7 +1348,7 @@ public class JavaProcessor extends AbstractJavaProcessor implements IJavaBreakpo
             }
         } else {
             for (ModuleNeeded neededModule : neededModules) {
-                MavenArtifact artifact = MavenUrlHelper.parseMvnUrl(neededModule.getMavenUri(true));
+                MavenArtifact artifact = MavenUrlHelper.parseMvnUrl(neededModule.getMavenUri());
                 libPath.append(PomUtil.getRelativeClassPathOfArtifact(artifact)).append(classPathSeparator);
             }
         }
