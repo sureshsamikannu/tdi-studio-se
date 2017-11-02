@@ -232,6 +232,9 @@ public class ConnectionFormComposite extends Composite {
                 formDefaultFactory.copy().align(SWT.FILL, SWT.CENTER).applyTo(label);
 
                 Text text = toolkit.createText(formBody, "", textStyle); //$NON-NLS-1$
+                if (currentField.getDefaultValue() != null) {
+                    text.setText(currentField.getDefaultValue());
+                }
 
                 formDefaultFactory.copy().grab(true, false).align(SWT.FILL, SWT.CENTER).applyTo(text);
                 LabelText labelText = new LabelText(label, text);
@@ -606,22 +609,37 @@ public class ConnectionFormComposite extends Composite {
 
     private void fillBean(boolean cleanDynamicValue) {
         if (connection != null) {
-            if (getRepository() != null) {
-                connection.setRepositoryId(getRepository().getId());
+            IRepositoryFactory repository = getRepository();
+            if (repository != null) {
+                connection.setRepositoryId(repository.getId());
 
                 Map<String, String> connFields = new HashMap<String, String>();
 
-                Map<String, LabelText> map = dynamicControls.get(getRepository());
+                Map<String, LabelText> map = dynamicControls.get(repository);
+
+                Map<String, DynamicFieldBean> keyBeanMap = new HashMap<>();
+                List<DynamicFieldBean> fields = repository.getFields();
+                if (fields != null) {
+                    for (DynamicFieldBean field : fields) {
+                        keyBeanMap.put(field.getId(), field);
+                    }
+                }
+
                 for (String fieldKey : map.keySet()) {
                     if (cleanDynamicValue) {
-                        map.get(fieldKey).setText("");
+                        String text = ""; //$NON-NLS-1$
+                        DynamicFieldBean dynamicFieldBean = keyBeanMap.get(fieldKey);
+                        if (dynamicFieldBean != null) {
+                            text = dynamicFieldBean.getDefaultValue();
+                        }
+                        map.get(fieldKey).setText(text);
                     }
                     connFields.put(fieldKey, map.get(fieldKey).getText());
                 }
 
-                Map<String, LabelledCombo> map2 = dynamicChoices.get(getRepository());
+                Map<String, LabelledCombo> map2 = dynamicChoices.get(repository);
                 for (String fieldKey : map2.keySet()) {
-                    for (DynamicChoiceBean dynamicChoiceBean : getRepository().getChoices()) {
+                    for (DynamicChoiceBean dynamicChoiceBean : repository.getChoices()) {
                         if (dynamicChoiceBean.getId().equals(fieldKey)) {
                             int selectionIndex = map2.get(fieldKey).getCombo().getSelectionIndex();
                             connFields.put(fieldKey, dynamicChoiceBean.getChoiceValue(selectionIndex));
