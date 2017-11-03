@@ -115,9 +115,9 @@
 				<COLUMN KEY="false" NAME="RedrivePolicy" TYPE="id_String" />
 				<COLUMN KEY="false" NAME="VisibilityTimeout" TYPE="id_Integer" />
 				<COLUMN KEY="false" NAME="KmsMasterKeyId" TYPE="id_String" />
-				<COLUMN KEY="false" NAME="KmsDataKeyReusePeriodSeconds" TYPE="id_String" />
-				<COLUMN KEY="false" NAME="FifoQueue" TYPE="id_String" />
-				<COLUMN KEY="false" NAME="ContentBasedDeduplication" TYPE="id_String" />
+				<COLUMN KEY="false" NAME="KmsDataKeyReusePeriodSeconds" TYPE="id_Integer" />
+				<COLUMN KEY="false" NAME="FifoQueue" TYPE="id_Boolean" />
+				<COLUMN KEY="false" NAME="ContentBasedDeduplication" TYPE="id_Boolean" />
 			</TABLE>
 		</PARAMETER>
 
