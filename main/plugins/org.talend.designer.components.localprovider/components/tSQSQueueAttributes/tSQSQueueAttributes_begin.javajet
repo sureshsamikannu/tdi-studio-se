@@ -53,17 +53,20 @@ imports="
      						String column_label = column.getLabel();
      							String typeToGenerate = JavaTypesManager.getTypeToGenerate(column.getTalendType(), column.isNullable());
 								JavaType javaType = JavaTypesManager.getJavaTypeFromId(column.getTalendType());
+								%>
+								String <%=column.getLabel()%>_<%=cid%> = <%=cid%>_receiveAttributeMap.get("<%=column.getLabel()%>");
+								<%
 										if (javaType == JavaTypesManager.STRING || javaType == JavaTypesManager.OBJECT) {//5
    	%>
-											<%=outputConnName %>.<%=column.getLabel() %> = <%=cid%>_receiveAttributeMap.get("<%=column.getLabel()%>");
+											<%=outputConnName %>.<%=column.getLabel() %> = <%=column.getLabel()%>_<%=cid%>;
    	<%
 										}else if (javaType == JavaTypesManager.INTEGER){
 	%>
-											<%=outputConnName %>.<%=column.getLabel() %> = Integer.valueOf(<%=cid%>_receiveAttributeMap.get("<%=column.getLabel()%>"));
+											<%=outputConnName %>.<%=column.getLabel() %> = <%=column.getLabel()%>_<%=cid%>==null?null:Integer.valueOf(<%=cid%>_receiveAttributeMap.get("<%=column.getLabel()%>"));
 										<%} else if (javaType == JavaTypesManager.BOOLEAN){%>
-											<%=outputConnName %>.<%=column.getLabel() %> = Boolean.valueOf(<%=cid%>_receiveAttributeMap.get("<%=column.getLabel()%>"));
+											<%=outputConnName %>.<%=column.getLabel() %> = <%=column.getLabel()%>_<%=cid%>==null?null:Boolean.valueOf(<%=cid%>_receiveAttributeMap.get("<%=column.getLabel()%>"));
 										<%} else if (javaType == JavaTypesManager.LONG){%>
-											<%=outputConnName %>.<%=column.getLabel() %> = Long.valueOf(<%=cid%>_receiveAttributeMap.get("<%=column.getLabel()%>"));
+											<%=outputConnName %>.<%=column.getLabel() %> = <%=column.getLabel()%>_<%=cid%>==null?null:Long.valueOf(<%=cid%>_receiveAttributeMap.get("<%=column.getLabel()%>"));
 	<%
 							}//5
     					}//4
