@@ -34,7 +34,6 @@ import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.talend.commons.exception.ExceptionHandler;
-import org.talend.commons.ui.runtime.CommonUIPlugin;
 import org.talend.commons.utils.generation.JavaUtils;
 import org.talend.core.GlobalServiceRegister;
 import org.talend.core.PluginChecker;
@@ -48,7 +47,7 @@ import org.talend.core.repository.utils.ItemResourceUtil;
 import org.talend.core.runtime.process.ITalendProcessJavaProject;
 import org.talend.core.ui.ITestContainerProviderService;
 import org.talend.designer.maven.model.TalendMavenConstants;
-import org.talend.designer.maven.tools.AggregatorPomsManager;
+import org.talend.designer.maven.tools.AggregatorPomsHelper;
 import org.talend.designer.maven.tools.MavenPomSynchronizer;
 import org.talend.designer.maven.tools.creator.CreateMavenCodeProject;
 import org.talend.designer.maven.utils.PomIdsHelper;
@@ -68,26 +67,24 @@ public class TalendJavaProjectManager {
 
     public static void initJavaProjects(IProgressMonitor monitor, Project project) {
         try {
-            AggregatorPomsManager manager = new AggregatorPomsManager(project);
+            AggregatorPomsHelper helper = new AggregatorPomsHelper(project);
             if (monitor == null) {
                 monitor = new NullProgressMonitor();
             }
             // create poms folder.
-            IFolder poms = createFolderIfNotExist(manager.getProjectPomsFolder(), monitor);
+            IFolder poms = createFolderIfNotExist(helper.getProjectPomsFolder(), monitor);
 
             // codes
             IFolder code = createFolderIfNotExist(poms.getFolder(DIR_CODES), monitor);
             // routines
-            IFolder routines = createFolderIfNotExist(code.getFolder(DIR_ROUTINES), monitor);
+            createFolderIfNotExist(code.getFolder(DIR_ROUTINES), monitor);
             // pigudfs
-            IFolder pigudfs = null;
             if (ProcessUtils.isRequiredPigUDFs(null)) {
-                pigudfs = createFolderIfNotExist(code.getFolder(DIR_PIGUDFS), monitor);
+                createFolderIfNotExist(code.getFolder(DIR_PIGUDFS), monitor);
             }
             // beans
-            IFolder beans = null;
             if (ProcessUtils.isRequiredBeans(null)) {
-                beans = createFolderIfNotExist(code.getFolder(DIR_BEANS), monitor);
+                createFolderIfNotExist(code.getFolder(DIR_BEANS), monitor);
             }
 
             // jobs
@@ -117,37 +114,24 @@ public class TalendJavaProjectManager {
 
             // create aggregator poms
             String jobGroupId = PomIdsHelper.getJobGroupId(project.getTechnicalLabel());
-            manager.createAggregatorFolderPom(process, DIR_PROCESS, jobGroupId, monitor);
-            manager.createAggregatorFolderPom(process_mr, DIR_PROCESS_MR, jobGroupId, monitor);
-            manager.createAggregatorFolderPom(process_storm, DIR_PROCESS_STORM, jobGroupId, monitor);
-            manager.createAggregatorFolderPom(routes, DIR_PROCESS_ROUTES, jobGroupId, monitor);
-            manager.createAggregatorFolderPom(services, DIR_PROCESS_SERVICES, jobGroupId, monitor);
-            manager.createAggregatorFolderPom(jobs, DIR_JOBS, jobGroupId, monitor);
-            manager.createAggregatorFolderPom(code, DIR_CODES, "org.talend.codes." + project.getTechnicalLabel(), monitor); //$NON-NLS-1$
+            helper.createAggregatorFolderPom(process, DIR_PROCESS, jobGroupId, monitor);
+            helper.createAggregatorFolderPom(process_mr, DIR_PROCESS_MR, jobGroupId, monitor);
+            helper.createAggregatorFolderPom(process_storm, DIR_PROCESS_STORM, jobGroupId, monitor);
+            helper.createAggregatorFolderPom(routes, DIR_PROCESS_ROUTES, jobGroupId, monitor);
+            helper.createAggregatorFolderPom(services, DIR_PROCESS_SERVICES, jobGroupId, monitor);
+            helper.createAggregatorFolderPom(jobs, DIR_JOBS, jobGroupId, monitor);
+            helper.createAggregatorFolderPom(code, DIR_CODES, "org.talend.codes." + project.getTechnicalLabel(), monitor); //$NON-NLS-1$
 
-            // create codes poms
-            AggregatorPomsManager.createRoutinesPom(routines.getFile(TalendMavenConstants.POM_FILE_NAME), monitor);
-            if (pigudfs != null) {
-                AggregatorPomsManager.createPigUDFsPom(pigudfs.getFile(TalendMavenConstants.POM_FILE_NAME), monitor);
-            }
-            if (beans != null) {
-                AggregatorPomsManager.createBeansPom(beans.getFile(TalendMavenConstants.POM_FILE_NAME), monitor);
-            }
-
-            manager.createRootPom(poms, monitor);
-
-            if (CommonUIPlugin.isFullyHeadless()) {
-                manager.installRootPom();
-            }
+            helper.createRootPom(poms, monitor);
         } catch (Exception e) {
             ExceptionHandler.process(e);
         }
     }
     
-    public static void installRootPom() {
-        AggregatorPomsManager manager = new AggregatorPomsManager(ProjectManager.getInstance().getCurrentProject());
+    public static void installRootPom(boolean current) {
+        AggregatorPomsHelper helper = new AggregatorPomsHelper(ProjectManager.getInstance().getCurrentProject());
         try {
-            manager.installRootPom();
+            helper.installRootPom(current);
         } catch (Exception e) {
             ExceptionHandler.process(e);
         }
@@ -155,14 +139,14 @@ public class TalendJavaProjectManager {
 
     public static ITalendProcessJavaProject getTalendCodeJavaProject(ERepositoryObjectType type) {
         Project project = ProjectManager.getInstance().getCurrentProject();
-        AggregatorPomsManager manager = new AggregatorPomsManager(project);
+        AggregatorPomsHelper helper = new AggregatorPomsHelper(project);
         ITalendProcessJavaProject talendCodeJavaProject = talendCodeJavaProjects.get(type);
         if (talendCodeJavaProject == null || talendCodeJavaProject.getProject() == null
                 || !talendCodeJavaProject.getProject().exists()) {
             try {
                 IProgressMonitor monitor = new NullProgressMonitor();
                 IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-                IFolder codeProjectFolder = manager.getProjectPomsFolder().getFolder(type.getFolder());
+                IFolder codeProjectFolder = helper.getProjectPomsFolder().getFolder(type.getFolder());
                 IProject codeProject = root.getProject(project.getTechnicalLabel() + "_" + type.name());
                 if (!codeProject.exists() || TalendCodeProjectUtil.needRecreate(monitor, codeProject)) {
                     createMavenJavaProject(monitor, codeProject, codeProjectFolder);
@@ -171,7 +155,7 @@ public class TalendJavaProjectManager {
                 if (!javaProject.isOpen()) {
                     javaProject.open(monitor);
                 }
-                AggregatorPomsManager.updateCodeProjectPom(monitor, type, codeProject.getFile(TalendMavenConstants.POM_FILE_NAME));
+                AggregatorPomsHelper.updateCodeProjectPom(monitor, type, codeProject.getFile(TalendMavenConstants.POM_FILE_NAME));
                 talendCodeJavaProject = new TalendProcessJavaProject(javaProject);
                 talendCodeJavaProject.cleanMavenFiles(monitor);
                 talendCodeJavaProjects.put(type, talendCodeJavaProject);
@@ -203,7 +187,7 @@ public class TalendJavaProjectManager {
             }
             String projectTechName = ProjectManager.getInstance().getProject(property).getTechnicalLabel();
             Project project = ProjectManager.getInstance().getProjectFromProjectTechLabel(projectTechName);
-            AggregatorPomsManager manager = new AggregatorPomsManager(project);
+            AggregatorPomsHelper helper = new AggregatorPomsHelper(project);
             talendJobJavaProject = talendJobJavaProjects.get(property.getId());
             if (talendJobJavaProject == null || talendJobJavaProject.getProject() == null
                     || !talendJobJavaProject.getProject().exists()) {
@@ -213,10 +197,10 @@ public class TalendJavaProjectManager {
                 IPath itemRelativePath = ItemResourceUtil.getItemRelativePath(property);
                 String jobFolderName = "item_" + property.getLabel(); //$NON-NLS-1$
                 ERepositoryObjectType type = ERepositoryObjectType.getItemType(property.getItem());
-                IFolder jobFolder = manager.getProcessFolder(type).getFolder(itemRelativePath).getFolder(jobFolderName);
+                IFolder jobFolder = helper.getProcessFolder(type).getFolder(itemRelativePath).getFolder(jobFolderName);
                 if (!jobProject.exists() || TalendCodeProjectUtil.needRecreate(monitor, jobProject)) {
                     createMavenJavaProject(monitor, jobProject, jobFolder);
-                    AggregatorPomsManager.updatePomIfCreate(monitor, jobProject.getFile(TalendMavenConstants.POM_FILE_NAME), property);
+                    AggregatorPomsHelper.updatePomIfCreate(monitor, jobProject.getFile(TalendMavenConstants.POM_FILE_NAME), property);
                 }
                 IJavaProject javaProject = JavaCore.create(jobProject);
                 if (!javaProject.isOpen()) {

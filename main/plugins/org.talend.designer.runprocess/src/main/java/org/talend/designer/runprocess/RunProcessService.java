@@ -34,6 +34,7 @@ import org.talend.core.model.process.IProcess2;
 import org.talend.core.model.properties.Property;
 import org.talend.core.model.properties.RoutineItem;
 import org.talend.core.model.repository.ERepositoryObjectType;
+import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.process.ITalendProcessJavaProject;
 import org.talend.core.runtime.projectsetting.ProjectPreferenceManager;
 import org.talend.designer.core.ui.action.SaveJobBeforeRunAction;
@@ -436,6 +437,11 @@ public class RunProcessService implements IRunProcessService {
     @Override
     public void buildCodesJavaProject() {
         delegateService.buildCodesJavaProject();
+    }
+
+    @Override
+    public String getAbsMavenArtifactPath(MavenArtifact artifact) {
+        return delegateService.getAbsMavenArtifactPath(artifact);
     }
 
 }

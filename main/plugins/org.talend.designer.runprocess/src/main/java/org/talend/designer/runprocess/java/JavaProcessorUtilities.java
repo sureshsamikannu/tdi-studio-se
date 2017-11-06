@@ -534,7 +534,6 @@ public class JavaProcessorUtilities {
     }
     
     public static IFolder getJavaProjectLibFolder2() {
-        //TODO remove when m2 dependencies are fully used
         try {
             IProject fsProject = ResourceUtils.getProject(ProjectManager.getInstance().getCurrentProject());
             IFolder libFolder = ResourceUtils.getFolder(fsProject,
